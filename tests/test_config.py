@@ -39,5 +39,5 @@ def test_settings_defaults_to_cheap_openrouter_model(tmp_path, monkeypatch) -> N
 
     settings = Settings.from_env(env_path=env_file)
 
-    assert settings.openai_model == "qwen/qwen3-30b-a3b-instruct-2507"
+    assert settings.openai_model == "deepseek/deepseek-v4-flash"
     assert settings.max_output_tokens == 1200

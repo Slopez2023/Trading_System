@@ -51,8 +51,14 @@ OpenRouter example in `.env`:
 RESEARCH_LOOP_EXTRACTOR=hybrid
 OPENAI_API_KEY=sk-or-v1-your-key
 OPENAI_BASE_URL=https://openrouter.ai/api/v1
-OPENAI_MODEL=qwen/qwen3-30b-a3b-instruct-2507
+OPENAI_MODEL=deepseek/deepseek-v4-flash
 RESEARCH_LOOP_MAX_OUTPUT_TOKENS=1200
+```
+
+Free OpenRouter option, if available:
+
+```env
+OPENAI_MODEL=deepseek/deepseek-v4-flash:free
 ```
 
 Or pass it directly:

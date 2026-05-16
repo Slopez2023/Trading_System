@@ -90,7 +90,7 @@ def test_openai_extractor_parses_structured_response() -> None:
 def test_openrouter_extractor_uses_chat_completions() -> None:
     def fake_post(url, payload, headers, timeout_seconds):
         assert url == "https://openrouter.ai/api/v1/chat/completions"
-        assert payload["model"] == "qwen/qwen3-30b-a3b-instruct-2507"
+        assert payload["model"] == "deepseek/deepseek-v4-flash"
         assert payload["max_tokens"] == 1200
         assert payload["response_format"]["type"] == "json_schema"
         return {
@@ -136,7 +136,7 @@ def test_openrouter_extractor_uses_chat_completions() -> None:
     settings = Settings(
         openai_api_key="test-key",
         openai_base_url="https://openrouter.ai/api/v1",
-        openai_model="qwen/qwen3-30b-a3b-instruct-2507",
+        openai_model="deepseek/deepseek-v4-flash",
     )
     result = OpenAIResearchExtractor(settings, http_post=fake_post).extract(_raw_row())
 

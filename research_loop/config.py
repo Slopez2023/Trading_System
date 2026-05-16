@@ -69,5 +69,5 @@ def _load_env_file(path: Path) -> dict[str, str]:
 
 def _default_model_for_base_url(base_url: str) -> str:
     if "openrouter.ai" in base_url:
-        return "qwen/qwen3-30b-a3b-instruct-2507"
+        return "deepseek/deepseek-v4-flash"
     return "gpt-5.2"
