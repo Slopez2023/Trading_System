@@ -38,3 +38,35 @@ def test_local_extractor_creates_strategy_record() -> None:
     assert result.records[0].record_type == "strategy_idea"
     assert "funding_rates" in result.records[0].required_data
     assert "backtest_loop" in result.records[0].next_loop_targets
+
+
+def test_local_extractor_keeps_strategy_when_risks_are_present() -> None:
+    connection = sqlite3.connect(":memory:")
+    connection.row_factory = sqlite3.Row
+    connection.execute(
+        """
+        CREATE TABLE raw (
+            title TEXT,
+            text TEXT,
+            source_markets_json TEXT,
+            source_topics_json TEXT
+        )
+        """
+    )
+    connection.execute(
+        """
+        INSERT INTO raw VALUES (?, ?, ?, ?)
+        """,
+        (
+            "BTC funding spike reversal",
+            "Backtest whether BTC perps reverse after funding and open interest spike. Watch slippage and liquidation risk.",
+            '["crypto"]',
+            '["manual"]',
+        ),
+    )
+    row = connection.execute("SELECT * FROM raw").fetchone()
+
+    result = LocalResearchExtractor().extract(row)
+
+    assert result.records[0].record_type == "strategy_idea"
+    assert "slippage may erase edge" in result.records[0].risks

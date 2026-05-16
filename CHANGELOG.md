@@ -8,3 +8,11 @@
 - Added CLI commands for initialization, source seeding, collection, extraction, digests, stats, manual raw item input, and continuous looping.
 - Added prompt templates for future LLM-backed classification, extraction, and scoring.
 - Added unit tests for extraction and repository behavior.
+
+## Unreleased
+
+- Added OpenAI extraction provider using structured JSON output.
+- Added `local`, `openai`, and `hybrid` extractor modes.
+- Added environment-based OpenAI configuration.
+- Fixed local strategy/risk classification so strategy ideas with risk terms stay strategy ideas.
+- Trimmed roadmap/checklist scope to v0.3.0.

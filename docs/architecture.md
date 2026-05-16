@@ -35,9 +35,11 @@ Included collectors:
 
 ## Extraction
 
-The active v0.1.0 extractor is local and deterministic. It creates structured records from keywords, market hints, detected data requirements, risks, and source metadata.
+The default extractor is local and deterministic. It creates structured records from keywords, market hints, detected data requirements, risks, and source metadata.
 
-The prompt files in `prompts/` define the planned LLM interface. A later version can add an LLM extractor behind the same pipeline without changing storage or collectors.
+The OpenAI extractor can be enabled with `RESEARCH_LOOP_EXTRACTOR=openai` or `RESEARCH_LOOP_EXTRACTOR=hybrid`. Hybrid mode tries OpenAI first and falls back to the local extractor if the API key or API call fails.
+
+The OpenAI extractor uses the Responses API with structured JSON output. The prompt files in `prompts/` document the extraction intent and can be refined as the AI path improves.
 
 ## Runtime Data
 

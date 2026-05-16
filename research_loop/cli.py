@@ -16,6 +16,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(prog="research-loop")
     parser.add_argument("--db", type=Path, default=DEFAULT_DB_PATH)
     parser.add_argument("--digest-dir", type=Path, default=DEFAULT_DIGEST_DIR)
+    parser.add_argument("--extractor", choices=["local", "openai", "hybrid"], default=None)
+    parser.add_argument("--openai-model", default=None)
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     subparsers.add_parser("init-db")
@@ -48,7 +50,12 @@ def main() -> None:
     loop_parser.add_argument("--limit", type=int, default=50)
 
     args = parser.parse_args()
-    settings = Settings(db_path=args.db, digest_dir=args.digest_dir)
+    settings = Settings.from_env(
+        db_path=args.db,
+        digest_dir=args.digest_dir,
+        extractor_provider=args.extractor,
+        openai_model=args.openai_model,
+    )
 
     if args.command == "init-db":
         init_db(settings.db_path)

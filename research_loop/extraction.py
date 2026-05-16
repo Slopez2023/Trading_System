@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import sqlite3
 from dataclasses import dataclass
+from typing import Protocol
 
 from .models import ResearchRecord
 from .utils import from_json
@@ -70,6 +71,11 @@ ASSET_PATTERN = re.compile(r"\b[A-Z]{2,6}\b")
 class ExtractionResult:
     relevance_score: float
     records: list[ResearchRecord]
+
+
+class ResearchExtractor(Protocol):
+    def extract(self, raw_item: sqlite3.Row) -> ExtractionResult:
+        raise NotImplementedError
 
 
 class LocalResearchExtractor:
@@ -233,14 +239,14 @@ def _score_relevance(lowered: str, tags: set[str], markets: list[str]) -> float:
 
 
 def _record_type(lowered: str) -> str:
+    if any(term in lowered for term in STRATEGY_TERMS):
+        return "strategy_idea"
     if any(term in lowered for term in ["source", "dataset", "api"]):
         return "data_source"
     if any(term in lowered for term in ["risk", "drawdown", "slippage", "overfit"]):
         return "risk_warning"
     if any(term in lowered for term in ["why", "does", "can you", "how do"]):
         return "research_question"
-    if any(term in lowered for term in STRATEGY_TERMS):
-        return "strategy_idea"
     return "market_observation"
 
 

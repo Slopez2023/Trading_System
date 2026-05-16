@@ -19,6 +19,8 @@ It does not trade, place orders, or build bots. It creates a source-backed resea
 - RSS and Reddit JSON collectors.
 - Raw item deduplication by URL and content hash.
 - A deterministic local extractor that creates useful records without an API key.
+- Optional OpenAI extractor for AI-backed research extraction.
+- Hybrid extractor mode that uses OpenAI with local fallback.
 - A Markdown digest generator.
 - CLI commands for init, seed, collect, extract, and run-once.
 
@@ -33,6 +35,20 @@ python3 -m research_loop seed-sources
 python3 -m research_loop run-once
 python3 -m research_loop digest
 python3 -m research_loop stats
+```
+
+Use AI extraction:
+
+```bash
+export OPENAI_API_KEY="your_key_here"
+export RESEARCH_LOOP_EXTRACTOR=hybrid
+python3 -m research_loop run-once
+```
+
+Or pass it directly:
+
+```bash
+python3 -m research_loop --extractor openai --openai-model gpt-5.2 extract-once
 ```
 
 The default database is:
@@ -116,11 +132,9 @@ digests/*.md
 
 Likely next steps:
 
-- Add OpenAI extraction provider behind the same extractor interface.
-- Add X, exchange announcements, SEC filings, and market-data anomaly collectors.
-- Add semantic dedupe/merge for similar research records.
-- Add source performance scoring based on downstream outcomes.
-- Add a dashboard or API for other loops.
+- Add source scheduling.
+- Add source management commands.
+- Add exchange/news source packs.
 
 ## Safety Boundary
 

@@ -5,7 +5,8 @@ from pathlib import Path
 from .collectors import Collector, CollectorError, RedditCollector, RSSCollector
 from .config import Settings
 from .db import connect, init_db
-from .extraction import LocalResearchExtractor
+from .extraction import LocalResearchExtractor, ResearchExtractor
+from .openai_extraction import OpenAIExtractionError, OpenAIResearchExtractor
 from .repository import Repository
 from .seeds import DEFAULT_SOURCES
 from datetime import datetime, timezone
@@ -50,7 +51,7 @@ def collect_once(settings: Settings) -> dict[str, int]:
 
 def extract_once(settings: Settings, limit: int = 50) -> dict[str, int]:
     init_db(settings.db_path)
-    extractor = LocalResearchExtractor()
+    extractor = _extractor(settings)
     processed = 0
     records_created = 0
     ignored = 0
@@ -120,3 +121,25 @@ def _collectors(settings: Settings) -> dict[str, Collector]:
         "rss": RSSCollector(settings),
         "reddit": RedditCollector(settings),
     }
+
+
+def _extractor(settings: Settings) -> ResearchExtractor:
+    provider = settings.extractor_provider.lower()
+    if provider == "openai":
+        return OpenAIResearchExtractor(settings)
+    if provider == "hybrid":
+        return HybridResearchExtractor(settings)
+    return LocalResearchExtractor()
+
+
+class HybridResearchExtractor:
+    def __init__(self, settings: Settings):
+        self.openai = OpenAIResearchExtractor(settings)
+        self.local = LocalResearchExtractor()
+
+    def extract(self, raw_item):
+        try:
+            return self.openai.extract(raw_item)
+        except OpenAIExtractionError as exc:
+            print(f"[extract] OpenAI failed; falling back to local: {exc}")
+            return self.local.extract(raw_item)
