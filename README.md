@@ -95,6 +95,7 @@ python3 -m research_loop add-raw --title "Funding spike idea" --text "Backtest w
 python3 -m research_loop sources list
 python3 -m research_loop raw list --status pending
 python3 -m research_loop smoke-test
+python3 -m research_loop eval-extractor
 python3 -m research_loop stats
 python3 -m research_loop loop --sleep-seconds 900
 ```

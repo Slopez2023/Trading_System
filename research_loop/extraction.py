@@ -239,6 +239,10 @@ def _score_relevance(lowered: str, tags: set[str], markets: list[str]) -> float:
 
 
 def _record_type(lowered: str) -> str:
+    explicit_risk_warning = "risk warning" in lowered or lowered.startswith("warning") or " warning" in lowered
+    test_intent = any(term in lowered for term in ["backtest", "test whether", "test if", "research whether"])
+    if explicit_risk_warning and not test_intent:
+        return "risk_warning"
     if any(term in lowered for term in STRATEGY_TERMS):
         return "strategy_idea"
     if any(term in lowered for term in ["source", "dataset", "api"]):

@@ -20,3 +20,5 @@
 - Fixed local strategy/risk classification so strategy ideas with risk terms stay strategy ideas.
 - Trimmed roadmap/checklist scope to v0.3.0.
 - Added source scheduling, source error tracking, raw item processing claim states, source/raw CLI commands, and smoke-test command.
+- Added extractor quality evaluation command with curated benchmark cases.
+- Improved local risk-warning classification based on extractor evaluation results.

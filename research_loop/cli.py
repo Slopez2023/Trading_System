@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .config import DEFAULT_DB_PATH, DEFAULT_DIGEST_DIR, Settings
 from .db import connect, init_db
+from .evaluation import run_extractor_eval
 from .models import RawItem, Source
 from .pipeline import collect_once, extract_once, run_once, seed_sources, write_digest
 from .repository import Repository
@@ -60,6 +61,7 @@ def main() -> None:
 
     subparsers.add_parser("stats")
     subparsers.add_parser("smoke-test")
+    subparsers.add_parser("eval-extractor")
 
     loop_parser = subparsers.add_parser("loop")
     loop_parser.add_argument("--sleep-seconds", type=int, default=900)
@@ -132,6 +134,12 @@ def main() -> None:
 
     if args.command == "smoke-test":
         _smoke_test(settings)
+        return
+
+    if args.command == "eval-extractor":
+        _, lines = run_extractor_eval(settings)
+        for line in lines:
+            print(line)
         return
 
     if args.command == "loop":
