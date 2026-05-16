@@ -341,6 +341,49 @@ class Repository:
             (limit,),
         ).fetchall()
 
+    def source_status_counts(self) -> dict[str, int]:
+        rows = self.connection.execute(
+            """
+            SELECT status, COUNT(*) AS count
+            FROM sources
+            GROUP BY status
+            """
+        ).fetchall()
+        return {row["status"]: int(row["count"]) for row in rows}
+
+    def raw_status_counts(self) -> dict[str, int]:
+        rows = self.connection.execute(
+            """
+            SELECT processing_status, COUNT(*) AS count
+            FROM raw_items
+            GROUP BY processing_status
+            """
+        ).fetchall()
+        return {row["processing_status"]: int(row["count"]) for row in rows}
+
+    def record_type_counts(self) -> dict[str, int]:
+        rows = self.connection.execute(
+            """
+            SELECT record_type, COUNT(*) AS count
+            FROM research_records
+            GROUP BY record_type
+            ORDER BY count DESC, record_type ASC
+            """
+        ).fetchall()
+        return {row["record_type"]: int(row["count"]) for row in rows}
+
+    def latest_source_errors(self, limit: int = 5) -> list[sqlite3.Row]:
+        return self.connection.execute(
+            """
+            SELECT source_id, last_failed_at, failure_count, last_error
+            FROM sources
+            WHERE last_error != ''
+            ORDER BY last_failed_at DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+
     def count_table(self, table: str) -> int:
         allowed = {"sources", "raw_items", "research_records", "evidence_links"}
         if table not in allowed:

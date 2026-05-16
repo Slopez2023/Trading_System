@@ -7,6 +7,7 @@ from pathlib import Path
 from .config import DEFAULT_DB_PATH, DEFAULT_DIGEST_DIR, Settings
 from .db import connect, init_db
 from .evaluation import run_extractor_eval
+from .monitor import render_monitor, run_monitor
 from .models import RawItem, Source
 from .pipeline import collect_once, extract_once, run_once, seed_sources, write_digest
 from .repository import Repository
@@ -62,6 +63,10 @@ def main() -> None:
     subparsers.add_parser("stats")
     subparsers.add_parser("smoke-test")
     subparsers.add_parser("eval-extractor")
+    monitor_parser = subparsers.add_parser("monitor")
+    monitor_parser.add_argument("--refresh", type=int, default=10)
+    monitor_parser.add_argument("--limit", type=int, default=10)
+    monitor_parser.add_argument("--once", action="store_true")
 
     loop_parser = subparsers.add_parser("loop")
     loop_parser.add_argument("--sleep-seconds", type=int, default=900)
@@ -140,6 +145,13 @@ def main() -> None:
         _, lines = run_extractor_eval(settings)
         for line in lines:
             print(line)
+        return
+
+    if args.command == "monitor":
+        if args.once:
+            print(render_monitor(settings, limit=args.limit))
+        else:
+            run_monitor(settings, refresh_seconds=args.refresh, limit=args.limit)
         return
 
     if args.command == "loop":
