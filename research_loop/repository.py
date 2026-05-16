@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from typing import Iterable
 
 from .models import RawItem, ResearchRecord, Source
+from .dedupe import record_fingerprint
 from .utils import content_hash, from_json, stable_json, to_json, utc_now
 
 
@@ -263,6 +264,12 @@ class Repository:
             stable_json(record.assets),
             stable_json(record.tags),
         )
+        fingerprint = record_fingerprint(record)
+        existing = self._find_duplicate_record(record_hash, fingerprint)
+        if existing:
+            self._merge_research_record(existing["record_id"], record, fingerprint, now)
+            self._insert_evidence_link(existing["record_id"], raw_item_id, record, now)
+            return False
         record_id = f"rec_{record_hash[:16]}"
         cursor = self.connection.execute(
             """
@@ -270,9 +277,9 @@ class Repository:
                 record_id, record_type, title, summary, details,
                 markets_json, assets_json, timeframes_json, tags_json,
                 required_data_json, risks_json, scores_json, status,
-                next_loop_targets_json, content_hash, created_at, updated_at
+                next_loop_targets_json, fingerprint, content_hash, created_at, updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(content_hash) DO UPDATE SET
                 summary = excluded.summary,
                 details = excluded.details,
@@ -285,6 +292,7 @@ class Repository:
                 scores_json = excluded.scores_json,
                 status = excluded.status,
                 next_loop_targets_json = excluded.next_loop_targets_json,
+                fingerprint = excluded.fingerprint,
                 updated_at = excluded.updated_at
             """,
             (
@@ -302,28 +310,13 @@ class Repository:
                 to_json(record.scores),
                 record.status,
                 to_json(record.next_loop_targets),
+                fingerprint,
                 record_hash,
                 now,
                 now,
             ),
         )
-        self.connection.execute(
-            """
-            INSERT OR IGNORE INTO evidence_links (
-                link_id, record_id, raw_item_id, relationship, summary, confidence, created_at
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (
-                f"evi_{uuid.uuid4().hex[:16]}",
-                record_id,
-                raw_item_id,
-                record.evidence_relationship,
-                record.evidence_summary,
-                record.scores.get("confidence", 50) / 100,
-                now,
-            ),
-        )
+        self._insert_evidence_link(record_id, raw_item_id, record, now)
         if cursor.rowcount:
             raw = self.connection.execute(
                 "SELECT source_id FROM raw_items WHERE raw_item_id = ?",
@@ -342,6 +335,101 @@ class Repository:
                 )
             return True
         return False
+
+    def _find_duplicate_record(self, record_hash: str, fingerprint: str) -> sqlite3.Row | None:
+        by_hash = self.connection.execute(
+            "SELECT record_id FROM research_records WHERE content_hash = ?",
+            (record_hash,),
+        ).fetchone()
+        if by_hash:
+            return by_hash
+        if fingerprint:
+            return self.connection.execute(
+                """
+                SELECT record_id
+                FROM research_records
+                WHERE fingerprint = ? AND status != 'archived'
+                ORDER BY updated_at DESC
+                LIMIT 1
+                """,
+                (fingerprint,),
+            ).fetchone()
+        return None
+
+    def _merge_research_record(self, record_id: str, record: ResearchRecord, fingerprint: str, now: str) -> None:
+        existing = self.connection.execute(
+            "SELECT * FROM research_records WHERE record_id = ?",
+            (record_id,),
+        ).fetchone()
+        if not existing:
+            return
+        markets = _merge_json_list(existing["markets_json"], record.markets)
+        assets = _merge_json_list(existing["assets_json"], record.assets)
+        timeframes = _merge_json_list(existing["timeframes_json"], record.timeframes)
+        tags = _merge_json_list(existing["tags_json"], record.tags)
+        required_data = _merge_json_list(existing["required_data_json"], record.required_data)
+        risks = _merge_json_list(existing["risks_json"], record.risks)
+        targets = _merge_json_list(existing["next_loop_targets_json"], record.next_loop_targets)
+        scores = _merge_scores(existing["scores_json"], record.scores)
+        status = _stronger_status(existing["status"], record.status)
+        summary = existing["summary"] or record.summary
+        details = existing["details"]
+        if record.details and record.details not in details:
+            details = "\n\n".join(part for part in [details, record.details] if part)[:4000]
+        self.connection.execute(
+            """
+            UPDATE research_records
+            SET summary = ?,
+                details = ?,
+                markets_json = ?,
+                assets_json = ?,
+                timeframes_json = ?,
+                tags_json = ?,
+                required_data_json = ?,
+                risks_json = ?,
+                scores_json = ?,
+                status = ?,
+                next_loop_targets_json = ?,
+                fingerprint = ?,
+                updated_at = ?
+            WHERE record_id = ?
+            """,
+            (
+                summary,
+                details,
+                to_json(markets),
+                to_json(assets),
+                to_json(timeframes),
+                to_json(tags),
+                to_json(required_data),
+                to_json(risks),
+                to_json(scores),
+                status,
+                to_json(targets),
+                fingerprint,
+                now,
+                record_id,
+            ),
+        )
+
+    def _insert_evidence_link(self, record_id: str, raw_item_id: str, record: ResearchRecord, now: str) -> None:
+        self.connection.execute(
+            """
+            INSERT OR IGNORE INTO evidence_links (
+                link_id, record_id, raw_item_id, relationship, summary, confidence, created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                f"evi_{uuid.uuid4().hex[:16]}",
+                record_id,
+                raw_item_id,
+                record.evidence_relationship,
+                record.evidence_summary,
+                record.scores.get("confidence", 50) / 100,
+                now,
+            ),
+        )
 
     def recent_research_records(self, limit: int = 25) -> list[sqlite3.Row]:
         return self.connection.execute(
@@ -482,3 +570,42 @@ def _is_due(last_checked_at: str | None, frequency_minutes: int, now: datetime) 
         checked_at = checked_at.replace(tzinfo=timezone.utc)
     elapsed_seconds = (now - checked_at).total_seconds()
     return elapsed_seconds >= frequency_minutes * 60
+
+
+def _merge_json_list(existing_json: str, new_values: list[str]) -> list[str]:
+    return _dedupe_list([*from_json(existing_json, []), *new_values])
+
+
+def _dedupe_list(values: list[str]) -> list[str]:
+    cleaned = []
+    seen = set()
+    for value in values:
+        item = str(value).strip()
+        if not item or item in seen:
+            continue
+        cleaned.append(item)
+        seen.add(item)
+    return cleaned
+
+
+def _merge_scores(existing_json: str, new_scores: dict[str, int]) -> dict[str, int]:
+    merged = from_json(existing_json, {})
+    for key, value in new_scores.items():
+        try:
+            merged[key] = max(int(merged.get(key, 0)), int(value))
+        except (TypeError, ValueError):
+            merged[key] = value
+    return merged
+
+
+def _stronger_status(existing: str, new: str) -> str:
+    rank = {
+        "archived": 0,
+        "needs_review": 1,
+        "weird_but_interesting": 2,
+        "risk_only": 3,
+        "needs_data": 4,
+        "ready_for_backtest": 5,
+        "captured": 1,
+    }
+    return new if rank.get(new, 1) >= rank.get(existing, 1) else existing

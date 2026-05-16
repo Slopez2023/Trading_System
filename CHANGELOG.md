@@ -28,4 +28,5 @@
 - Improved AI scoring instructions to avoid single-digit priority scores for valid strategies.
 - Normalized AI relevance score when model returns useful records with zero relevance.
 - Added post-extraction record normalization for loop targets, soft statuses, markets, risks, and scores.
+- Added conservative duplicate fingerprinting and evidence-preserving merge behavior.
 - Added score floors for normalized risk warnings and strategy ideas.

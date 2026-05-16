@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS research_records (
     scores_json TEXT NOT NULL DEFAULT '{}',
     status TEXT NOT NULL DEFAULT 'captured',
     next_loop_targets_json TEXT NOT NULL DEFAULT '[]',
+    fingerprint TEXT NOT NULL DEFAULT '',
     content_hash TEXT NOT NULL UNIQUE,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
@@ -129,6 +130,7 @@ MIGRATIONS = [
     ("raw_items", "processing_started_at", "ALTER TABLE raw_items ADD COLUMN processing_started_at TEXT"),
     ("raw_items", "processed_at", "ALTER TABLE raw_items ADD COLUMN processed_at TEXT"),
     ("raw_items", "processing_error", "ALTER TABLE raw_items ADD COLUMN processing_error TEXT NOT NULL DEFAULT ''"),
+    ("research_records", "fingerprint", "ALTER TABLE research_records ADD COLUMN fingerprint TEXT NOT NULL DEFAULT ''"),
 ]
 
 
