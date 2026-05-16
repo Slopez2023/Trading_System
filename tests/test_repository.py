@@ -39,6 +39,7 @@ def test_repository_inserts_raw_item_and_record(tmp_path) -> None:
                 markets=["stocks"],
                 tags=["momentum"],
                 required_data=["price", "volume"],
+                status="needs_data",
                 next_loop_targets=["backtest_loop"],
             ),
             raw["raw_item_id"],

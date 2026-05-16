@@ -130,6 +130,16 @@ contradiction
 
 Every research record links back to raw evidence.
 
+Extracted records are normalized before saving. The normalizer fixes structure without hard-filtering unusual ideas:
+
+```text
+allowed loop targets
+soft statuses
+market cleanup
+data/risk cleanup
+score bounds
+```
+
 More detail:
 
 - [Vision](docs/VISION.md)

@@ -266,13 +266,26 @@ class Repository:
         record_id = f"rec_{record_hash[:16]}"
         cursor = self.connection.execute(
             """
-            INSERT OR IGNORE INTO research_records (
+            INSERT INTO research_records (
                 record_id, record_type, title, summary, details,
                 markets_json, assets_json, timeframes_json, tags_json,
                 required_data_json, risks_json, scores_json, status,
                 next_loop_targets_json, content_hash, created_at, updated_at
             )
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(content_hash) DO UPDATE SET
+                summary = excluded.summary,
+                details = excluded.details,
+                markets_json = excluded.markets_json,
+                assets_json = excluded.assets_json,
+                timeframes_json = excluded.timeframes_json,
+                tags_json = excluded.tags_json,
+                required_data_json = excluded.required_data_json,
+                risks_json = excluded.risks_json,
+                scores_json = excluded.scores_json,
+                status = excluded.status,
+                next_loop_targets_json = excluded.next_loop_targets_json,
+                updated_at = excluded.updated_at
             """,
             (
                 record_id,
@@ -414,6 +427,7 @@ class Repository:
             """
             SELECT record_type, COUNT(*) AS count
             FROM research_records
+            WHERE status != 'archived'
             GROUP BY record_type
             ORDER BY count DESC, record_type ASC
             """

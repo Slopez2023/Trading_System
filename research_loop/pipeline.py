@@ -7,6 +7,7 @@ from .config import Settings
 from .db import connect, init_db
 from .extraction import LocalResearchExtractor, ResearchExtractor
 from .openai_extraction import OpenAIExtractionError, OpenAIResearchExtractor
+from .normalization import normalize_records
 from .repository import Repository
 from .seeds import DEFAULT_SOURCES
 from datetime import datetime, timezone
@@ -74,7 +75,7 @@ def extract_once(settings: Settings, limit: int = 50) -> dict[str, int]:
                 processed += 1
                 continue
             created_for_item = 0
-            for record in result.records:
+            for record in normalize_records(result.records):
                 if repo.insert_research_record(record, raw_item["raw_item_id"]):
                     records_created += 1
                     created_for_item += 1
