@@ -14,5 +14,6 @@
 - Added OpenAI extraction provider using structured JSON output.
 - Added `local`, `openai`, and `hybrid` extractor modes.
 - Added environment-based OpenAI configuration.
+- Added local `.env` loading for OpenAI configuration.
 - Fixed local strategy/risk classification so strategy ideas with risk terms stay strategy ideas.
 - Trimmed roadmap/checklist scope to v0.3.0.

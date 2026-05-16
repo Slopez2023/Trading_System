@@ -40,8 +40,8 @@ python3 -m research_loop stats
 Use AI extraction:
 
 ```bash
-export OPENAI_API_KEY="your_key_here"
-export RESEARCH_LOOP_EXTRACTOR=hybrid
+cp .env.example .env
+# edit .env and set OPENAI_API_KEY
 python3 -m research_loop run-once
 ```
 
@@ -50,6 +50,8 @@ Or pass it directly:
 ```bash
 python3 -m research_loop --extractor openai --openai-model gpt-5.2 extract-once
 ```
+
+This app uses OpenAI API-key auth through `OPENAI_API_KEY`. It does not read Codex's private login/session files.
 
 The default database is:
 

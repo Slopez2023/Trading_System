@@ -28,14 +28,36 @@ class Settings:
         digest_dir: Path = DEFAULT_DIGEST_DIR,
         extractor_provider: str | None = None,
         openai_model: str | None = None,
+        env_path: Path | None = None,
     ) -> "Settings":
+        file_env = _load_env_file(env_path or Path.cwd() / ".env")
+
+        def value(name: str, default: str = "") -> str:
+            return os.getenv(name) or file_env.get(name) or default
+
         return cls(
             db_path=db_path,
             digest_dir=digest_dir,
-            request_timeout_seconds=int(os.getenv("RESEARCH_LOOP_TIMEOUT_SECONDS", "20")),
-            user_agent=os.getenv("RESEARCH_LOOP_USER_AGENT", "TradingResearchLoop/0.1.0"),
-            extractor_provider=extractor_provider or os.getenv("RESEARCH_LOOP_EXTRACTOR", "local"),
-            openai_api_key=os.getenv("OPENAI_API_KEY", ""),
-            openai_model=openai_model or os.getenv("OPENAI_MODEL", "gpt-5.2"),
-            openai_base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+            request_timeout_seconds=int(value("RESEARCH_LOOP_TIMEOUT_SECONDS", "20")),
+            user_agent=value("RESEARCH_LOOP_USER_AGENT", "TradingResearchLoop/0.1.0"),
+            extractor_provider=extractor_provider or value("RESEARCH_LOOP_EXTRACTOR", "local"),
+            openai_api_key=value("OPENAI_API_KEY"),
+            openai_model=openai_model or value("OPENAI_MODEL", "gpt-5.2"),
+            openai_base_url=value("OPENAI_BASE_URL", "https://api.openai.com/v1"),
         )
+
+
+def _load_env_file(path: Path) -> dict[str, str]:
+    if not path.exists():
+        return {}
+    values: dict[str, str] = {}
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, raw_value = line.split("=", 1)
+        key = key.strip()
+        value = raw_value.strip().strip('"').strip("'")
+        if key:
+            values[key] = value
+    return values

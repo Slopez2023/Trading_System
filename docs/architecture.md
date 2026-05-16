@@ -41,6 +41,8 @@ The OpenAI extractor can be enabled with `RESEARCH_LOOP_EXTRACTOR=openai` or `RE
 
 The OpenAI extractor uses the Responses API with structured JSON output. The prompt files in `prompts/` document the extraction intent and can be refined as the AI path improves.
 
+Auth uses `OPENAI_API_KEY` from the shell environment or local `.env`. Codex login/session files are not read by this project.
+
 ## Runtime Data
 
 Runtime files are intentionally ignored:
