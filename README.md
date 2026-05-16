@@ -45,6 +45,15 @@ cp .env.example .env
 python3 -m research_loop run-once
 ```
 
+OpenRouter example in `.env`:
+
+```env
+RESEARCH_LOOP_EXTRACTOR=hybrid
+OPENAI_API_KEY=sk-or-v1-your-key
+OPENAI_BASE_URL=https://openrouter.ai/api/v1
+OPENAI_MODEL=openai/gpt-4.1-mini
+```
+
 Or pass it directly:
 
 ```bash
