@@ -41,7 +41,7 @@ Use AI extraction:
 
 ```bash
 cp .env.example .env
-# edit .env and set OPENAI_API_KEY
+# edit .env and set OPENROUTER_API_KEY
 python3 -m research_loop run-once
 ```
 
@@ -49,7 +49,7 @@ OpenRouter example in `.env`:
 
 ```env
 RESEARCH_LOOP_EXTRACTOR=hybrid
-OPENAI_API_KEY=sk-or-v1-your-key
+OPENROUTER_API_KEY=sk-or-v1-your-key
 OPENAI_BASE_URL=https://openrouter.ai/api/v1
 OPENAI_MODEL=deepseek/deepseek-v4-flash
 RESEARCH_LOOP_MAX_OUTPUT_TOKENS=1200
@@ -67,7 +67,7 @@ Or pass it directly:
 python3 -m research_loop --extractor openai --openai-model gpt-5.2 extract-once
 ```
 
-This app uses OpenAI API-key auth through `OPENAI_API_KEY`. It does not read Codex's private login/session files.
+This app supports OpenRouter through `OPENROUTER_API_KEY`. It does not read Codex's private login/session files.
 
 The default database is:
 

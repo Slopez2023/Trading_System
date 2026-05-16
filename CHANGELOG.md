@@ -23,3 +23,4 @@
 - Added extractor quality evaluation command with curated benchmark cases.
 - Improved local risk-warning classification based on extractor evaluation results.
 - Added terminal monitor command for live CLI observability.
+- Added `OPENROUTER_API_KEY` support for OpenRouter-only setup.

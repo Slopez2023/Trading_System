@@ -37,6 +37,7 @@ class Settings:
             return os.getenv(name) or file_env.get(name) or default
 
         base_url = value("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        provider_key = value("OPENROUTER_API_KEY") or value("OPENAI_API_KEY")
         model = openai_model or value("OPENAI_MODEL", _default_model_for_base_url(base_url))
         return cls(
             db_path=db_path,
@@ -44,7 +45,7 @@ class Settings:
             request_timeout_seconds=int(value("RESEARCH_LOOP_TIMEOUT_SECONDS", "20")),
             user_agent=value("RESEARCH_LOOP_USER_AGENT", "TradingResearchLoop/0.1.0"),
             extractor_provider=extractor_provider or value("RESEARCH_LOOP_EXTRACTOR", "local"),
-            openai_api_key=value("OPENAI_API_KEY"),
+            openai_api_key=provider_key,
             openai_model=model,
             openai_base_url=base_url,
             max_output_tokens=int(value("RESEARCH_LOOP_MAX_OUTPUT_TOKENS", "1200")),
