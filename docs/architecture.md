@@ -45,6 +45,8 @@ Auth uses `OPENAI_API_KEY` from the shell environment or local `.env`. Codex log
 
 OpenRouter and other OpenAI-compatible providers can be used by setting `OPENAI_BASE_URL` and `OPENAI_MODEL`.
 
+The recommended low-cost OpenRouter model for this project is `qwen/qwen3-30b-a3b-instruct-2507`. It is cheap enough for small-account testing and stronger than tiny models for structured extraction.
+
 ## Runtime Data
 
 Runtime files are intentionally ignored:

@@ -16,5 +16,6 @@
 - Added environment-based OpenAI configuration.
 - Added local `.env` loading for OpenAI configuration.
 - Documented OpenRouter/OpenAI-compatible provider configuration.
+- Added OpenRouter chat-completions support and a low-cost default model.
 - Fixed local strategy/risk classification so strategy ideas with risk terms stay strategy ideas.
 - Trimmed roadmap/checklist scope to v0.3.0.

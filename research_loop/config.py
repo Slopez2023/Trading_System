@@ -20,6 +20,7 @@ class Settings:
     openai_api_key: str = ""
     openai_model: str = "gpt-5.2"
     openai_base_url: str = "https://api.openai.com/v1"
+    max_output_tokens: int = 1200
 
     @classmethod
     def from_env(
@@ -35,6 +36,8 @@ class Settings:
         def value(name: str, default: str = "") -> str:
             return os.getenv(name) or file_env.get(name) or default
 
+        base_url = value("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        model = openai_model or value("OPENAI_MODEL", _default_model_for_base_url(base_url))
         return cls(
             db_path=db_path,
             digest_dir=digest_dir,
@@ -42,8 +45,9 @@ class Settings:
             user_agent=value("RESEARCH_LOOP_USER_AGENT", "TradingResearchLoop/0.1.0"),
             extractor_provider=extractor_provider or value("RESEARCH_LOOP_EXTRACTOR", "local"),
             openai_api_key=value("OPENAI_API_KEY"),
-            openai_model=openai_model or value("OPENAI_MODEL", "gpt-5.2"),
-            openai_base_url=value("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+            openai_model=model,
+            openai_base_url=base_url,
+            max_output_tokens=int(value("RESEARCH_LOOP_MAX_OUTPUT_TOKENS", "1200")),
         )
 
 
@@ -61,3 +65,9 @@ def _load_env_file(path: Path) -> dict[str, str]:
         if key:
             values[key] = value
     return values
+
+
+def _default_model_for_base_url(base_url: str) -> str:
+    if "openrouter.ai" in base_url:
+        return "qwen/qwen3-30b-a3b-instruct-2507"
+    return "gpt-5.2"

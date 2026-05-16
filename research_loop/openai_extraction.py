@@ -114,24 +114,65 @@ class OpenAIResearchExtractor:
         if not self.settings.openai_api_key:
             raise OpenAIExtractionError("OPENAI_API_KEY is required for OpenAI extraction")
 
-        payload = self._payload(raw_item)
+        if self._use_chat_completions:
+            url = f"{self.settings.openai_base_url.rstrip('/')}/chat/completions"
+            payload = self._chat_payload(raw_item)
+        else:
+            url = f"{self.settings.openai_base_url.rstrip('/')}/responses"
+            payload = self._responses_payload(raw_item)
         headers = {
             "Authorization": f"Bearer {self.settings.openai_api_key}",
             "Content-Type": "application/json",
         }
         response = self.http_post(
-            f"{self.settings.openai_base_url.rstrip('/')}/responses",
+            url,
             payload,
             headers,
             self.settings.request_timeout_seconds,
         )
-        parsed = _parse_response_json(response)
+        parsed = _parse_chat_json(response) if self._use_chat_completions else _parse_response_json(response)
         return _result_from_payload(parsed)
 
-    def _payload(self, raw_item: sqlite3.Row) -> dict[str, Any]:
+    @property
+    def _use_chat_completions(self) -> bool:
+        return "openrouter.ai" in self.settings.openai_base_url
+
+    def _responses_payload(self, raw_item: sqlite3.Row) -> dict[str, Any]:
+        text = self._prompt(raw_item)
+        return {
+            "model": self.settings.openai_model,
+            "input": [{"role": "user", "content": text}],
+            "max_output_tokens": self.settings.max_output_tokens,
+            "text": {
+                "format": {
+                    "type": "json_schema",
+                    "name": "research_extraction",
+                    "strict": True,
+                    "schema": RESEARCH_RECORD_SCHEMA,
+                }
+            },
+        }
+
+    def _chat_payload(self, raw_item: sqlite3.Row) -> dict[str, Any]:
+        return {
+            "model": self.settings.openai_model,
+            "messages": [{"role": "user", "content": self._prompt(raw_item)}],
+            "temperature": 0.1,
+            "max_tokens": self.settings.max_output_tokens,
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "research_extraction",
+                    "strict": True,
+                    "schema": RESEARCH_RECORD_SCHEMA,
+                },
+            },
+        }
+
+    def _prompt(self, raw_item: sqlite3.Row) -> str:
         source_markets = from_json(raw_item["source_markets_json"], [])
         source_topics = from_json(raw_item["source_topics_json"], [])
-        text = f"""
+        return f"""
 You are extracting source-backed trading research records.
 
 Rules:
@@ -152,18 +193,6 @@ Raw item:
 - source_markets: {source_markets}
 - source_topics: {source_topics}
 """.strip()
-        return {
-            "model": self.settings.openai_model,
-            "input": [{"role": "user", "content": text}],
-            "text": {
-                "format": {
-                    "type": "json_schema",
-                    "name": "research_extraction",
-                    "strict": True,
-                    "schema": RESEARCH_RECORD_SCHEMA,
-                }
-            },
-        }
 
 
 def _post_json(url: str, payload: dict[str, Any], headers: dict[str, str], timeout_seconds: int) -> dict[str, Any]:
@@ -197,6 +226,16 @@ def _parse_response_json(response: dict[str, Any]) -> dict[str, Any]:
                 return _loads_object(content["text"])
 
     raise OpenAIExtractionError("OpenAI response did not contain output text")
+
+
+def _parse_chat_json(response: dict[str, Any]) -> dict[str, Any]:
+    choices = response.get("choices")
+    if not isinstance(choices, list) or not choices:
+        raise OpenAIExtractionError("chat response did not contain choices")
+    content = choices[0].get("message", {}).get("content")
+    if not isinstance(content, str):
+        raise OpenAIExtractionError("chat response did not contain message content")
+    return _loads_object(content)
 
 
 def _loads_object(value: str) -> dict[str, Any]:

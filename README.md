@@ -51,7 +51,8 @@ OpenRouter example in `.env`:
 RESEARCH_LOOP_EXTRACTOR=hybrid
 OPENAI_API_KEY=sk-or-v1-your-key
 OPENAI_BASE_URL=https://openrouter.ai/api/v1
-OPENAI_MODEL=openai/gpt-4.1-mini
+OPENAI_MODEL=qwen/qwen3-30b-a3b-instruct-2507
+RESEARCH_LOOP_MAX_OUTPUT_TOKENS=1200
 ```
 
 Or pass it directly:

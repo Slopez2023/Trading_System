@@ -85,3 +85,59 @@ def test_openai_extractor_parses_structured_response() -> None:
     assert len(result.records) == 1
     assert result.records[0].record_type == "strategy_idea"
     assert "backtest_loop" in result.records[0].next_loop_targets
+
+
+def test_openrouter_extractor_uses_chat_completions() -> None:
+    def fake_post(url, payload, headers, timeout_seconds):
+        assert url == "https://openrouter.ai/api/v1/chat/completions"
+        assert payload["model"] == "qwen/qwen3-30b-a3b-instruct-2507"
+        assert payload["max_tokens"] == 1200
+        assert payload["response_format"]["type"] == "json_schema"
+        return {
+            "choices": [
+                {
+                    "message": {
+                        "content": """
+                        {
+                          "relevance_score": 0.75,
+                          "records": [
+                            {
+                              "record_type": "strategy_idea",
+                              "title": "Fade BTC funding spikes",
+                              "summary": "Test whether BTC reverses after funding spikes.",
+                              "details": "Backtest BTC reversals after funding spikes.",
+                              "markets": ["crypto"],
+                              "assets": ["BTC"],
+                              "timeframes": ["1D"],
+                              "tags": ["funding"],
+                              "required_data": ["funding_rates", "price_volume"],
+                              "risks": ["slippage"],
+                              "scores": {
+                                "priority": 70,
+                                "novelty": 40,
+                                "testability": 85,
+                                "data_availability": 80,
+                                "urgency": 50,
+                                "confidence": 60,
+                                "source_quality": 50
+                              },
+                              "next_loop_targets": ["backtest_loop"],
+                              "evidence_summary": "Source mentions backtesting BTC reversals after funding spikes.",
+                              "evidence_relationship": "source_observation"
+                            }
+                          ]
+                        }
+                        """
+                    }
+                }
+            ]
+        }
+
+    settings = Settings(
+        openai_api_key="test-key",
+        openai_base_url="https://openrouter.ai/api/v1",
+        openai_model="qwen/qwen3-30b-a3b-instruct-2507",
+    )
+    result = OpenAIResearchExtractor(settings, http_post=fake_post).extract(_raw_row())
+
+    assert result.records[0].title == "Fade BTC funding spikes"
