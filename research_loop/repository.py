@@ -335,11 +335,59 @@ class Repository:
             """
             SELECT *
             FROM research_records
+            WHERE status != 'archived'
             ORDER BY created_at DESC
             LIMIT ?
             """,
             (limit,),
         ).fetchall()
+
+    def archive_research_records(self, before: str | None = None) -> int:
+        if before:
+            cursor = self.connection.execute(
+                """
+                UPDATE research_records
+                SET status = 'archived', updated_at = ?
+                WHERE status != 'archived' AND created_at < ?
+                """,
+                (utc_now(), before),
+            )
+        else:
+            cursor = self.connection.execute(
+                """
+                UPDATE research_records
+                SET status = 'archived', updated_at = ?
+                WHERE status != 'archived'
+                """,
+                (utc_now(),),
+            )
+        return int(cursor.rowcount)
+
+    def reset_raw_items_for_reprocess(self, status: str = "extracted", limit: int = 50) -> int:
+        rows = self.connection.execute(
+            """
+            SELECT raw_item_id
+            FROM raw_items
+            WHERE processing_status = ?
+            ORDER BY collected_at DESC
+            LIMIT ?
+            """,
+            (status, limit),
+        ).fetchall()
+        ids = [row["raw_item_id"] for row in rows]
+        for raw_item_id in ids:
+            self.connection.execute(
+                """
+                UPDATE raw_items
+                SET processing_status = 'pending',
+                    processing_started_at = NULL,
+                    processed_at = NULL,
+                    processing_error = ''
+                WHERE raw_item_id = ?
+                """,
+                (raw_item_id,),
+            )
+        return len(ids)
 
     def source_status_counts(self) -> dict[str, int]:
         rows = self.connection.execute(

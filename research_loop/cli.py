@@ -53,6 +53,16 @@ def main() -> None:
     list_parser = subparsers.add_parser("list-records")
     list_parser.add_argument("--limit", type=int, default=20)
 
+    records_parser = subparsers.add_parser("records")
+    records_subparsers = records_parser.add_subparsers(dest="records_command", required=True)
+    records_archive = records_subparsers.add_parser("archive")
+    records_archive.add_argument("--before", default=None)
+    records_archive.add_argument("--yes", action="store_true")
+
+    reprocess_parser = subparsers.add_parser("reprocess")
+    reprocess_parser.add_argument("--status", default="extracted")
+    reprocess_parser.add_argument("--limit", type=int, default=50)
+
     add_raw_parser = subparsers.add_parser("add-raw")
     add_raw_parser.add_argument("--source-id", default="manual")
     add_raw_parser.add_argument("--title", required=True)
@@ -120,6 +130,14 @@ def main() -> None:
 
     if args.command == "list-records":
         _list_records(settings, limit=args.limit)
+        return
+
+    if args.command == "records":
+        _records(settings, args)
+        return
+
+    if args.command == "reprocess":
+        _reprocess(settings, args.status, args.limit)
         return
 
     if args.command == "add-raw":
@@ -222,6 +240,27 @@ def _raw(settings: Settings, args) -> None:
             f"{row['raw_item_id']} | {row['processing_status']} | {row['source_id']} | "
             f"relevance={row['relevance_score']} | {row['title']}{error}"
         )
+
+
+def _records(settings: Settings, args) -> None:
+    if args.records_command == "archive" and not args.yes:
+        print("refusing to archive without --yes")
+        return
+    init_db(settings.db_path)
+    with connect(settings.db_path) as connection:
+        repo = Repository(connection)
+        archived = repo.archive_research_records(before=args.before)
+        connection.commit()
+    print(f"records_archived={archived}")
+
+
+def _reprocess(settings: Settings, status: str, limit: int) -> None:
+    init_db(settings.db_path)
+    with connect(settings.db_path) as connection:
+        repo = Repository(connection)
+        reset = repo.reset_raw_items_for_reprocess(status=status, limit=limit)
+        connection.commit()
+    print(f"raw_items_reset={reset}")
 
 
 def _add_raw(settings: Settings, source_id: str, source_type: str, title: str, text: str, url: str) -> None:

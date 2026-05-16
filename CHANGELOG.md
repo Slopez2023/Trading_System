@@ -24,3 +24,6 @@
 - Improved local risk-warning classification based on extractor evaluation results.
 - Added terminal monitor command for live CLI observability.
 - Added `OPENROUTER_API_KEY` support for OpenRouter-only setup.
+- Added record archive and raw reprocess commands for clean baselines.
+- Improved AI scoring instructions to avoid single-digit priority scores for valid strategies.
+- Normalized AI relevance score when model returns useful records with zero relevance.

@@ -141,3 +141,44 @@ def test_openrouter_extractor_uses_chat_completions() -> None:
     result = OpenAIResearchExtractor(settings, http_post=fake_post).extract(_raw_row())
 
     assert result.records[0].title == "Fade BTC funding spikes"
+
+
+def test_openai_extractor_normalizes_zero_relevance_when_records_exist() -> None:
+    def fake_post(url, payload, headers, timeout_seconds):
+        return {
+            "output_text": """
+            {
+              "relevance_score": 0,
+              "records": [
+                {
+                  "record_type": "strategy_idea",
+                  "title": "Funding idea",
+                  "summary": "Test funding reversal.",
+                  "details": "Backtest funding reversal.",
+                  "markets": ["crypto"],
+                  "assets": ["BTC"],
+                  "timeframes": ["1D"],
+                  "tags": ["funding"],
+                  "required_data": ["funding_rates"],
+                  "risks": [],
+                  "scores": {
+                    "priority": 75,
+                    "novelty": 50,
+                    "testability": 90,
+                    "data_availability": 80,
+                    "urgency": 60,
+                    "confidence": 70,
+                    "source_quality": 50
+                  },
+                  "next_loop_targets": ["backtest_loop"],
+                  "evidence_summary": "Source mentions funding reversal.",
+                  "evidence_relationship": "source_observation"
+                }
+              ]
+            }
+            """
+        }
+
+    result = OpenAIResearchExtractor(Settings(openai_api_key="test-key"), http_post=fake_post).extract(_raw_row())
+
+    assert result.relevance_score == 0.7

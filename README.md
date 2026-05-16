@@ -98,6 +98,8 @@ python3 -m research_loop smoke-test
 python3 -m research_loop eval-extractor
 python3 -m research_loop monitor
 python3 -m research_loop monitor --once
+python3 -m research_loop records archive --yes
+python3 -m research_loop reprocess --status extracted --limit 25
 python3 -m research_loop stats
 python3 -m research_loop loop --sleep-seconds 900
 ```

@@ -183,6 +183,9 @@ Rules:
 - Prefer testable strategy hypotheses when present.
 - If a strategy idea contains risk terms, create the strategy idea and include risks. Add a separate risk_warning only if the risk is important on its own.
 - Every record must link back to the source via evidence_summary.
+- Score priority, testability, confidence, novelty, data_availability, urgency, and source_quality as 0-100 integers.
+- Use this score guide: 80-100 strong/high priority, 60-79 useful, 40-59 weak or needs review, 0-39 low value.
+- A clearly testable strategy idea with named data should usually have priority 60-90, not single digits.
 
 Raw item:
 - source_id: {raw_item["source_id"]}
@@ -276,7 +279,12 @@ def _result_from_payload(payload: dict[str, Any]) -> ExtractionResult:
                 evidence_relationship=_required_str(item, "evidence_relationship"),
             )
         )
-    return ExtractionResult(relevance_score=max(0.0, min(relevance_score, 1.0)), records=records)
+    relevance_score = max(0.0, min(relevance_score, 1.0))
+    if records and relevance_score == 0:
+        confidence_values = [record.scores.get("confidence", 50) for record in records]
+        avg_confidence = sum(confidence_values) / len(confidence_values)
+        relevance_score = max(0.5, min(avg_confidence / 100, 0.95))
+    return ExtractionResult(relevance_score=relevance_score, records=records)
 
 
 def _required_str(item: dict[str, Any], key: str) -> str:
