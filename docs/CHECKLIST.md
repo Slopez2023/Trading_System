@@ -1,12 +1,14 @@
 # Project Checklist
 
-Use this as the working checklist for moving the project from v0.1.0 to a real research engine.
+This is the high-level checklist. The detailed version-by-version plan lives in [ROADMAP.md](ROADMAP.md).
 
 ## Repo Health
 
 - [x] Git repo initialized
 - [x] README added
 - [x] Changelog added
+- [x] Vision doc added
+- [x] Roadmap added
 - [x] Architecture doc added
 - [x] GitHub Actions test workflow added
 - [x] Runtime database files ignored
@@ -19,7 +21,16 @@ Use this as the working checklist for moving the project from v0.1.0 to a real r
 - [ ] Remote GitHub repository connected
 - [ ] Branch protection enabled on GitHub
 
-## v0.1.0 Core
+## Current Product Boundary
+
+- [x] Research ingestion only
+- [x] No trading execution
+- [x] Raw evidence saved before analysis
+- [x] Research records linked to evidence
+- [ ] Stable downstream output schema documented
+- [ ] API/export contract documented
+
+## v0.1.x Foundation and Hardening
 
 - [x] SQLite schema
 - [x] Source registry
@@ -32,35 +43,109 @@ Use this as the working checklist for moving the project from v0.1.0 to a real r
 - [x] CLI commands
 - [x] Digest generation
 - [x] Unit tests
+- [ ] Fix strategy/risk classification issue
+- [ ] Respect source schedules
+- [ ] Add processing claim states
+- [ ] Store collector failures
+- [ ] Add structured logging
+- [ ] Add source CLI management
+- [ ] Add collector fixture tests
 
-## Near-Term Engineering
+## v0.2.x AI Extraction
 
-- [ ] Add real extractor interface
-- [ ] Add OpenAI extractor
-- [ ] Validate LLM JSON output
-- [ ] Add source import/export
-- [ ] Add record dedupe
-- [ ] Add source performance scoring
-- [ ] Add logging
-- [ ] Add config file support
-- [ ] Add scheduled service instructions
+- [ ] Extractor interface
+- [ ] OpenAI extractor
+- [ ] Local fallback
+- [ ] Strict JSON schema
+- [ ] Prompt versioning
+- [ ] Model output validation
+- [ ] Cost/token tracking
+- [ ] AI fixture tests
+- [ ] Extractor evaluation set
 
-## Source Expansion
+## v0.3.x Source Management
+
+- [ ] `sources.yaml`
+- [ ] Source import/export
+- [ ] Source add/update/list/disable commands
+- [ ] Source health checks
+- [ ] Source performance scoring
+- [ ] Source candidate workflow
+- [ ] Source approval/rejection flow
+
+## v0.4.x Source Expansion
 
 - [ ] Exchange announcements
-- [ ] Funding rates
-- [ ] Open interest
 - [ ] SEC filings
 - [ ] Economic calendar
 - [ ] News RSS bundle
-- [ ] Quant research feeds
-- [ ] X integration decision
+- [ ] Funding rates
+- [ ] Open interest
+- [ ] Liquidation data decision
+- [ ] X/social integration decision
+- [ ] Collector rate-limit handling
 
-## Downstream Readiness
+## v0.5.x Dedupe and Routing
 
-- [ ] Stable output schema documented
-- [ ] Queue format for downstream loops
-- [ ] API or export command
-- [ ] Record status transitions
-- [ ] Human review workflow
-- [ ] Backtest-loop handoff contract
+- [ ] Exact record dedupe
+- [ ] Semantic dedupe
+- [ ] Merge evidence
+- [ ] Canonical records
+- [ ] Record lifecycle statuses
+- [ ] Routing queues
+- [ ] Downstream loop handoff schemas
+- [ ] Route history
+
+## v0.6.x Service Readiness
+
+- [ ] Service mode
+- [ ] Graceful shutdown
+- [ ] Process guard
+- [ ] Retry/backoff
+- [ ] Dead-letter handling
+- [ ] Health command
+- [ ] Backup command
+- [ ] Maintenance command
+- [ ] Local Mac deployment docs
+- [ ] Docker deployment docs
+
+## v0.7.x API and Exports
+
+- [ ] JSON export
+- [ ] CSV export
+- [ ] Stable schema versioning
+- [ ] HTTP API
+- [ ] Read-only API mode
+- [ ] API tests
+
+## v0.8.x Review Workflow
+
+- [ ] Review commands
+- [ ] Record notes
+- [ ] Promote/reject commands
+- [ ] Evidence display
+- [ ] Review digest
+- [ ] Dashboard decision
+
+## v0.9.x Production Polish
+
+- [ ] Documentation pass
+- [ ] Security pass
+- [ ] Performance pass
+- [ ] Migration pass
+- [ ] Load test
+- [ ] Backup/restore test
+- [ ] Upgrade test
+
+## v1.0.0 Stable Research Inbox
+
+- [ ] 24/7 operation
+- [ ] Reliable source scheduling
+- [ ] AI extraction with fallback
+- [ ] Evidence-linked records
+- [ ] Dedupe and merge
+- [ ] Downstream queue/API/export
+- [ ] Review workflow
+- [ ] Observability
+- [ ] Backup/restore
+- [ ] Full test suite
