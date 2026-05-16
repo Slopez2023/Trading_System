@@ -88,7 +88,12 @@ contradiction
 
 Every research record links back to raw evidence.
 
-More detail is in [docs/architecture.md](docs/architecture.md).
+More detail:
+
+- [Vision](docs/VISION.md)
+- [Architecture](docs/architecture.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Project checklist](docs/CHECKLIST.md)
 
 ## Development
 
@@ -96,6 +101,8 @@ More detail is in [docs/architecture.md](docs/architecture.md).
 python3 -m pytest
 python3 -m compileall research_loop tests
 ```
+
+Contribution rules are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Runtime files are ignored by git:
 
@@ -114,3 +121,7 @@ Likely next steps:
 - Add semantic dedupe/merge for similar research records.
 - Add source performance scoring based on downstream outcomes.
 - Add a dashboard or API for other loops.
+
+## Safety Boundary
+
+This project is a research ingestion system. It does not provide financial advice, does not execute trades, and does not decide whether a strategy is profitable. Downstream systems must validate, backtest, and risk-check anything this loop captures.
