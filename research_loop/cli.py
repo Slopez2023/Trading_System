@@ -24,6 +24,21 @@ def main() -> None:
     subparsers.add_parser("seed-sources")
     subparsers.add_parser("collect-once")
 
+    sources_parser = subparsers.add_parser("sources")
+    sources_subparsers = sources_parser.add_subparsers(dest="sources_command", required=True)
+    sources_subparsers.add_parser("list")
+    sources_subparsers.add_parser("health")
+    source_enable = sources_subparsers.add_parser("enable")
+    source_enable.add_argument("source_id")
+    source_disable = sources_subparsers.add_parser("disable")
+    source_disable.add_argument("source_id")
+
+    raw_parser = subparsers.add_parser("raw")
+    raw_subparsers = raw_parser.add_subparsers(dest="raw_command", required=True)
+    raw_list = raw_subparsers.add_parser("list")
+    raw_list.add_argument("--status", default=None)
+    raw_list.add_argument("--limit", type=int, default=25)
+
     extract_parser = subparsers.add_parser("extract-once")
     extract_parser.add_argument("--limit", type=int, default=50)
 
@@ -44,6 +59,7 @@ def main() -> None:
     add_raw_parser.add_argument("--source-type", default="manual")
 
     subparsers.add_parser("stats")
+    subparsers.add_parser("smoke-test")
 
     loop_parser = subparsers.add_parser("loop")
     loop_parser.add_argument("--sleep-seconds", type=int, default=900)
@@ -70,6 +86,14 @@ def main() -> None:
     if args.command == "collect-once":
         result = collect_once(settings)
         print(_format_result(result))
+        return
+
+    if args.command == "sources":
+        _sources(settings, args)
+        return
+
+    if args.command == "raw":
+        _raw(settings, args)
         return
 
     if args.command == "extract-once":
@@ -106,6 +130,10 @@ def main() -> None:
         _stats(settings)
         return
 
+    if args.command == "smoke-test":
+        _smoke_test(settings)
+        return
+
     if args.command == "loop":
         _loop(settings, sleep_seconds=args.sleep_seconds, limit=args.limit)
         return
@@ -133,6 +161,49 @@ def _list_records(settings: Settings, limit: int) -> None:
         print(f"{row['created_at']} | {scores.get('priority', 'n/a'):>3} | {row['record_type']} | {markets} | {row['title']}")
 
 
+def _sources(settings: Settings, args) -> None:
+    init_db(settings.db_path)
+    with connect(settings.db_path) as connection:
+        repo = Repository(connection)
+        if args.sources_command in {"list", "health"}:
+            rows = repo.list_sources()
+            if not rows:
+                print("no sources found")
+                return
+            for row in rows:
+                error = f" | error={row['last_error']}" if row["last_error"] else ""
+                print(
+                    f"{row['source_id']} | {row['source_type']} | {row['status']} | "
+                    f"every={row['check_frequency_minutes']}m | checked={row['last_checked_at'] or 'never'} | "
+                    f"failures={row['failure_count']}{error}"
+                )
+            return
+        if args.sources_command == "enable":
+            updated = repo.set_source_status(args.source_id, "active")
+        elif args.sources_command == "disable":
+            updated = repo.set_source_status(args.source_id, "disabled")
+        else:
+            updated = False
+        connection.commit()
+    print(f"updated={int(updated)}")
+
+
+def _raw(settings: Settings, args) -> None:
+    init_db(settings.db_path)
+    with connect(settings.db_path) as connection:
+        repo = Repository(connection)
+        rows = repo.list_raw_items(status=args.status, limit=args.limit)
+    if not rows:
+        print("no raw items found")
+        return
+    for row in rows:
+        error = f" | error={row['processing_error']}" if row["processing_error"] else ""
+        print(
+            f"{row['raw_item_id']} | {row['processing_status']} | {row['source_id']} | "
+            f"relevance={row['relevance_score']} | {row['title']}{error}"
+        )
+
+
 def _add_raw(settings: Settings, source_id: str, source_type: str, title: str, text: str, url: str) -> None:
     init_db(settings.db_path)
     with connect(settings.db_path) as connection:
@@ -150,6 +221,7 @@ def _add_raw(settings: Settings, source_id: str, source_type: str, title: str, t
                     url=f"manual://{source_id}",
                     markets=[],
                     topics=["manual", "research"],
+                    status="disabled" if source_type == "manual" else "active",
                     check_frequency_minutes=0,
                     quality_score=0.8,
                     noise_score=0.2,
@@ -179,6 +251,23 @@ def _stats(settings: Settings) -> None:
         print(f"raw_items={repo.count_table('raw_items')}")
         print(f"research_records={repo.count_table('research_records')}")
         print(f"evidence_links={repo.count_table('evidence_links')}")
+
+
+def _smoke_test(settings: Settings) -> None:
+    init_db(settings.db_path)
+    _add_raw(
+        settings,
+        source_id="manual_smoke",
+        source_type="manual",
+        title="BTC funding spike reversal smoke test",
+        text="Backtest whether BTC perpetual futures reverse after funding rates and open interest spike. Watch slippage.",
+        url="manual://smoke-test",
+    )
+    result = extract_once(settings, limit=5)
+    print(_format_result(result))
+    _list_records(settings, limit=5)
+    path = write_digest(settings, limit=5)
+    print(f"digest={path}")
 
 
 def _format_result(result: dict[str, int]) -> str:

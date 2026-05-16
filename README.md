@@ -92,6 +92,9 @@ python3 -m research_loop run-once
 python3 -m research_loop digest
 python3 -m research_loop list-records
 python3 -m research_loop add-raw --title "Funding spike idea" --text "Backtest whether BTC reverses after funding and open interest spike."
+python3 -m research_loop sources list
+python3 -m research_loop raw list --status pending
+python3 -m research_loop smoke-test
 python3 -m research_loop stats
 python3 -m research_loop loop --sleep-seconds 900
 ```

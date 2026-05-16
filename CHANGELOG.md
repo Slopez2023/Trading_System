@@ -19,3 +19,4 @@
 - Added OpenRouter chat-completions support and set DeepSeek V4 Flash as the low-cost default model.
 - Fixed local strategy/risk classification so strategy ideas with risk terms stay strategy ideas.
 - Trimmed roadmap/checklist scope to v0.3.0.
+- Added source scheduling, source error tracking, raw item processing claim states, source/raw CLI commands, and smoke-test command.

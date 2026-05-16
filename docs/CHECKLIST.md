@@ -28,14 +28,14 @@ Detailed scope is in [ROADMAP.md](ROADMAP.md). Keep this checklist short.
 - [x] Local extractor
 - [x] OpenAI extractor
 - [x] Hybrid fallback mode
-- [ ] Source scheduling
-- [ ] Stored error tracking
-- [ ] Source management commands
+- [x] Source scheduling
+- [x] Stored error tracking
+- [x] Source management commands
 
 ## v0.3.0 Target
 
 - [ ] Strong AI extraction flow
 - [ ] Clean source management
-- [ ] Reliable loop behavior
-- [ ] Better tests
+- [x] Reliable loop behavior
+- [x] Better tests
 - [ ] Clear setup docs

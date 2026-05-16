@@ -30,10 +30,10 @@ Purpose: make the loop useful now by adding AI extraction while keeping local fa
 - [x] Keep local extractor as fallback
 - [x] Fix strategy/risk classification issue in local extractor
 - [x] Add tests for OpenAI response parsing
-- [ ] Add real `.env` loading or document shell exports clearly
-- [ ] Add one command that runs a full smoke test
-- [ ] Add source scheduling so sources are only checked when due
-- [ ] Store collector errors instead of only printing them
+- [x] Add real `.env` loading or document shell exports clearly
+- [x] Add one command that runs a full smoke test
+- [x] Add source scheduling so sources are only checked when due
+- [x] Store collector errors instead of only printing them
 - [ ] Add structured logging
 
 Acceptance:
@@ -47,21 +47,21 @@ Acceptance:
 
 Purpose: make the system safe for long-running use.
 
-- [ ] Respect `check_frequency_minutes`
-- [ ] Add source due/not-due logic
-- [ ] Add raw item states: `pending`, `processing`, `extracted`, `ignored`, `failed`
-- [ ] Add processing claim step to avoid duplicate processing
-- [ ] Store source failures in database
-- [ ] Add commands: `sources list`, `sources enable`, `sources disable`
-- [ ] Add command: `raw list --status pending`
+- [x] Respect `check_frequency_minutes`
+- [x] Add source due/not-due logic
+- [x] Add raw item states: `pending`, `processing`, `extracted`, `ignored`, `failed`
+- [x] Add processing claim step to avoid duplicate processing
+- [x] Store source failures in database
+- [x] Add commands: `sources list`, `sources enable`, `sources disable`
+- [x] Add command: `raw list --status pending`
 - [ ] Add collector fixture tests
-- [ ] Add integration test: `init-db -> add-raw -> extract -> digest`
+- [x] Add integration test: `init-db -> add-raw -> extract -> digest`
 
 Acceptance:
 
-- [ ] Running the loop repeatedly does not over-fetch sources
-- [ ] Collection failures are inspectable
-- [ ] Two workers cannot process the same raw item
+- [x] Running the loop repeatedly does not over-fetch sources
+- [x] Collection failures are inspectable
+- [x] Two workers cannot process the same raw item
 
 ## v0.3.0 - Clean Source Management
 

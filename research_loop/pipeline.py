@@ -30,9 +30,13 @@ def collect_once(settings: Settings) -> dict[str, int]:
     inserted = 0
     errors = 0
     checked = 0
+    skipped = 0
     with connect(settings.db_path) as connection:
         repo = Repository(connection)
-        for source in repo.list_active_sources():
+        active_count = len(repo.list_active_sources())
+        due_sources = repo.list_due_sources()
+        skipped = active_count - len(due_sources)
+        for source in due_sources:
             collector = collectors.get(source.source_type)
             if collector is None:
                 continue
@@ -41,12 +45,12 @@ def collect_once(settings: Settings) -> dict[str, int]:
                 raw_items = collector.collect(source)
             except CollectorError as exc:
                 errors += 1
-                print(f"[collect] {source.source_id}: {exc}")
+                repo.mark_source_failed(source.source_id, str(exc))
                 continue
             inserted += repo.insert_raw_items(raw_items)
             repo.mark_source_checked(source.source_id)
         connection.commit()
-    return {"sources_checked": checked, "raw_items_inserted": inserted, "errors": errors}
+    return {"sources_checked": checked, "sources_skipped": skipped, "raw_items_inserted": inserted, "errors": errors}
 
 
 def extract_once(settings: Settings, limit: int = 50) -> dict[str, int]:
@@ -57,8 +61,13 @@ def extract_once(settings: Settings, limit: int = 50) -> dict[str, int]:
     ignored = 0
     with connect(settings.db_path) as connection:
         repo = Repository(connection)
-        for raw_item in repo.list_pending_raw_items(limit=limit):
-            result = extractor.extract(raw_item)
+        for raw_item in repo.claim_pending_raw_items(limit=limit):
+            try:
+                result = extractor.extract(raw_item)
+            except Exception as exc:
+                repo.mark_raw_item_failed(raw_item["raw_item_id"], str(exc))
+                processed += 1
+                continue
             if not result.records:
                 repo.mark_raw_item_processed(raw_item["raw_item_id"], "ignored", result.relevance_score)
                 ignored += 1

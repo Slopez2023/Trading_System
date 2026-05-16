@@ -20,6 +20,9 @@ CREATE TABLE IF NOT EXISTS sources (
     quality_score REAL NOT NULL DEFAULT 0.5,
     noise_score REAL NOT NULL DEFAULT 0.5,
     last_checked_at TEXT,
+    last_failed_at TEXT,
+    last_error TEXT NOT NULL DEFAULT '',
+    failure_count INTEGER NOT NULL DEFAULT 0,
     metadata_json TEXT NOT NULL DEFAULT '{}',
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
@@ -39,6 +42,9 @@ CREATE TABLE IF NOT EXISTS raw_items (
     content_hash TEXT NOT NULL UNIQUE,
     processing_status TEXT NOT NULL DEFAULT 'pending',
     relevance_score REAL,
+    processing_started_at TEXT,
+    processed_at TEXT,
+    processing_error TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL,
     FOREIGN KEY (source_id) REFERENCES sources(source_id)
 );
@@ -116,6 +122,16 @@ CREATE TABLE IF NOT EXISTS processing_jobs (
 """
 
 
+MIGRATIONS = [
+    ("sources", "last_failed_at", "ALTER TABLE sources ADD COLUMN last_failed_at TEXT"),
+    ("sources", "last_error", "ALTER TABLE sources ADD COLUMN last_error TEXT NOT NULL DEFAULT ''"),
+    ("sources", "failure_count", "ALTER TABLE sources ADD COLUMN failure_count INTEGER NOT NULL DEFAULT 0"),
+    ("raw_items", "processing_started_at", "ALTER TABLE raw_items ADD COLUMN processing_started_at TEXT"),
+    ("raw_items", "processed_at", "ALTER TABLE raw_items ADD COLUMN processed_at TEXT"),
+    ("raw_items", "processing_error", "ALTER TABLE raw_items ADD COLUMN processing_error TEXT NOT NULL DEFAULT ''"),
+]
+
+
 def connect(db_path: Path | str) -> sqlite3.Connection:
     path = Path(db_path)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -128,3 +144,11 @@ def connect(db_path: Path | str) -> sqlite3.Connection:
 def init_db(db_path: Path | str) -> None:
     with connect(db_path) as connection:
         connection.executescript(SCHEMA)
+        for table, column, statement in MIGRATIONS:
+            if not _column_exists(connection, table, column):
+                connection.execute(statement)
+
+
+def _column_exists(connection: sqlite3.Connection, table: str, column: str) -> bool:
+    rows = connection.execute(f"PRAGMA table_info({table})").fetchall()
+    return any(row["name"] == column for row in rows)

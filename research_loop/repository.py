@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sqlite3
 import uuid
+from datetime import datetime, timezone
 from typing import Iterable
 
 from .models import RawItem, ResearchRecord, Source
@@ -70,10 +71,56 @@ class Repository:
         ).fetchall()
         return [self._source_from_row(row) for row in rows]
 
+    def list_sources(self) -> list[sqlite3.Row]:
+        return self.connection.execute(
+            """
+            SELECT source_id, source_type, name, status, check_frequency_minutes,
+                   last_checked_at, last_failed_at, failure_count, last_error
+            FROM sources
+            ORDER BY source_type, name
+            """
+        ).fetchall()
+
+    def list_due_sources(self) -> list[Source]:
+        now = datetime.now(timezone.utc)
+        due = []
+        for source in self.list_active_sources():
+            row = self.connection.execute(
+                "SELECT last_checked_at FROM sources WHERE source_id = ?",
+                (source.source_id,),
+            ).fetchone()
+            if _is_due(row["last_checked_at"] if row else None, source.check_frequency_minutes, now):
+                due.append(source)
+        return due
+
+    def set_source_status(self, source_id: str, status: str) -> bool:
+        cursor = self.connection.execute(
+            "UPDATE sources SET status = ?, updated_at = ? WHERE source_id = ?",
+            (status, utc_now(), source_id),
+        )
+        return bool(cursor.rowcount)
+
     def mark_source_checked(self, source_id: str) -> None:
         self.connection.execute(
-            "UPDATE sources SET last_checked_at = ?, updated_at = ? WHERE source_id = ?",
+            """
+            UPDATE sources
+            SET last_checked_at = ?, updated_at = ?, last_error = ''
+            WHERE source_id = ?
+            """,
             (utc_now(), utc_now(), source_id),
+        )
+
+    def mark_source_failed(self, source_id: str, error: str) -> None:
+        self.connection.execute(
+            """
+            UPDATE sources
+            SET last_failed_at = ?,
+                last_error = ?,
+                failure_count = failure_count + 1,
+                updated_at = ?
+            WHERE source_id = ?
+            """,
+            (utc_now(), error[:1000], utc_now(), source_id),
         )
 
     def insert_raw_items(self, raw_items: Iterable[RawItem]) -> int:
@@ -118,15 +165,64 @@ class Repository:
                 )
         return inserted
 
-    def list_pending_raw_items(self, limit: int = 50) -> list[sqlite3.Row]:
-        return self.connection.execute(
+    def claim_pending_raw_items(self, limit: int = 50) -> list[sqlite3.Row]:
+        now = utc_now()
+        rows = self.connection.execute(
             """
+            SELECT raw_item_id
+            FROM raw_items
+            WHERE processing_status = 'pending'
+            ORDER BY collected_at ASC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        ids = [row["raw_item_id"] for row in rows]
+        for raw_item_id in ids:
+            self.connection.execute(
+                """
+                UPDATE raw_items
+                SET processing_status = 'processing',
+                    processing_started_at = ?,
+                    processing_error = ''
+                WHERE raw_item_id = ? AND processing_status = 'pending'
+                """,
+                (now, raw_item_id),
+            )
+        if not ids:
+            return []
+        placeholders = ",".join("?" for _ in ids)
+        return self.connection.execute(
+            f"""
             SELECT raw_items.*, sources.markets_json AS source_markets_json,
                    sources.topics_json AS source_topics_json
             FROM raw_items
             JOIN sources ON raw_items.source_id = sources.source_id
-            WHERE processing_status = 'pending'
+            WHERE raw_items.raw_item_id IN ({placeholders})
             ORDER BY collected_at ASC
+            """,
+            ids,
+        ).fetchall()
+
+    def list_raw_items(self, status: str | None = None, limit: int = 25) -> list[sqlite3.Row]:
+        if status:
+            return self.connection.execute(
+                """
+                SELECT raw_item_id, source_id, processing_status, relevance_score,
+                       collected_at, processed_at, title, processing_error
+                FROM raw_items
+                WHERE processing_status = ?
+                ORDER BY collected_at DESC
+                LIMIT ?
+                """,
+                (status, limit),
+            ).fetchall()
+        return self.connection.execute(
+            """
+            SELECT raw_item_id, source_id, processing_status, relevance_score,
+                   collected_at, processed_at, title, processing_error
+            FROM raw_items
+            ORDER BY collected_at DESC
             LIMIT ?
             """,
             (limit,),
@@ -136,10 +232,25 @@ class Repository:
         self.connection.execute(
             """
             UPDATE raw_items
-            SET processing_status = ?, relevance_score = ?
+            SET processing_status = ?,
+                relevance_score = ?,
+                processed_at = ?,
+                processing_error = ''
             WHERE raw_item_id = ?
             """,
-            (status, relevance_score, raw_item_id),
+            (status, relevance_score, utc_now(), raw_item_id),
+        )
+
+    def mark_raw_item_failed(self, raw_item_id: str, error: str) -> None:
+        self.connection.execute(
+            """
+            UPDATE raw_items
+            SET processing_status = 'failed',
+                processed_at = ?,
+                processing_error = ?
+            WHERE raw_item_id = ?
+            """,
+            (utc_now(), error[:1000], raw_item_id),
         )
 
     def insert_research_record(self, record: ResearchRecord, raw_item_id: str) -> bool:
@@ -251,3 +362,18 @@ class Repository:
             noise_score=row["noise_score"],
             metadata=from_json(row["metadata_json"], {}),
         )
+
+
+def _is_due(last_checked_at: str | None, frequency_minutes: int, now: datetime) -> bool:
+    if frequency_minutes <= 0:
+        return True
+    if not last_checked_at:
+        return True
+    try:
+        checked_at = datetime.fromisoformat(last_checked_at)
+    except ValueError:
+        return True
+    if checked_at.tzinfo is None:
+        checked_at = checked_at.replace(tzinfo=timezone.utc)
+    elapsed_seconds = (now - checked_at).total_seconds()
+    return elapsed_seconds >= frequency_minutes * 60

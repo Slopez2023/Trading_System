@@ -30,7 +30,7 @@ def test_repository_inserts_raw_item_and_record(tmp_path) -> None:
             ]
         )
         assert inserted == 1
-        raw = repo.list_pending_raw_items(limit=1)[0]
+        raw = repo.claim_pending_raw_items(limit=1)[0]
         created = repo.insert_research_record(
             ResearchRecord(
                 record_type="strategy_idea",
@@ -53,3 +53,27 @@ def test_repository_inserts_raw_item_and_record(tmp_path) -> None:
         assert repo.count_table("raw_items") == 1
         assert repo.count_table("research_records") == 1
         assert repo.count_table("evidence_links") == 1
+
+
+def test_repository_claims_pending_items_once(tmp_path) -> None:
+    db_path = tmp_path / "research.sqlite3"
+    init_db(db_path)
+    with connect(db_path) as connection:
+        repo = Repository(connection)
+        repo.upsert_source(Source(source_id="test_source", source_type="rss", name="Test", url="https://example.com"))
+        repo.insert_raw_items(
+            [
+                RawItem(
+                    source_id="test_source",
+                    source_type="rss",
+                    url="https://example.com/1",
+                    title="Momentum idea",
+                    text="Backtest momentum.",
+                )
+            ]
+        )
+        first_claim = repo.claim_pending_raw_items(limit=1)
+        second_claim = repo.claim_pending_raw_items(limit=1)
+
+    assert len(first_claim) == 1
+    assert second_claim == []
