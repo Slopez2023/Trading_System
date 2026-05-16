@@ -97,7 +97,20 @@ def _data_concepts(values: list[str]) -> list[str]:
 
 def _market_terms(values: list[str]) -> list[str]:
     terms = sorted(_normalize_token(market) for market in values if market)
-    if "crypto" in terms:
+    joined = " ".join(terms)
+    crypto_markers = (
+        "crypto",
+        "btc",
+        "bitcoin",
+        "eth",
+        "ethereum",
+        "sol",
+        "solana",
+        "usdt",
+        "perp",
+        "perpetual",
+    )
+    if any(marker in joined for marker in crypto_markers):
         return ["crypto"]
     return terms
 

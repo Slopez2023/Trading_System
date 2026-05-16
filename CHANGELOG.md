@@ -29,4 +29,5 @@
 - Normalized AI relevance score when model returns useful records with zero relevance.
 - Added post-extraction record normalization for loop targets, soft statuses, markets, risks, and scores.
 - Added conservative duplicate fingerprinting and evidence-preserving merge behavior.
+- Improved duplicate matching for common crypto perpetual market aliases.
 - Added score floors for normalized risk warnings and strategy ideas.

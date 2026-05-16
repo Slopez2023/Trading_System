@@ -23,6 +23,33 @@ def test_record_fingerprint_matches_obvious_duplicates() -> None:
     assert record_fingerprint(first) == record_fingerprint(second)
 
 
+def test_record_fingerprint_matches_crypto_perp_market_aliases() -> None:
+    first = ResearchRecord(
+        record_type="strategy_idea",
+        title="BTC funding squeeze reversal",
+        summary="Short BTC after an extreme positive funding spike fades.",
+        markets=["BTC/USDT perpetual futures", "crypto"],
+        assets=["BTC"],
+        required_data=[
+            "BTC perpetual funding rate history",
+            "BTC/USDT price data",
+        ],
+    )
+    second = ResearchRecord(
+        record_type="strategy_idea",
+        title="BTC funding rate reversal short",
+        summary="Short BTCUSDT perpetuals after crowded positive funding rejects.",
+        markets=["BTCUSDT perpetual"],
+        assets=["BTC"],
+        required_data=[
+            "BTC perpetual funding rate",
+            "BTCUSDT perpetual price candles",
+        ],
+    )
+
+    assert record_fingerprint(first) == record_fingerprint(second)
+
+
 def test_record_fingerprint_does_not_merge_different_record_types() -> None:
     strategy = ResearchRecord(
         record_type="strategy_idea",
