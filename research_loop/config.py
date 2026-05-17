@@ -17,7 +17,7 @@ class Settings:
     digest_dir: Path = DEFAULT_DIGEST_DIR
     log_path: Path = DEFAULT_LOG_PATH
     request_timeout_seconds: int = 20
-    user_agent: str = "TradingResearchLoop/0.3.0"
+    user_agent: str = "TradingResearchLoop/0.3.1"
     extractor_provider: str = "local"
     openai_api_key: str = ""
     openai_model: str = "gpt-5.2"
@@ -50,7 +50,7 @@ class Settings:
             digest_dir=resolved_digest_dir,
             log_path=Path(value("RESEARCH_LOOP_LOG_PATH", str(DEFAULT_LOG_PATH))),
             request_timeout_seconds=int(value("RESEARCH_LOOP_TIMEOUT_SECONDS", "20")),
-            user_agent=value("RESEARCH_LOOP_USER_AGENT", "TradingResearchLoop/0.3.0"),
+            user_agent=value("RESEARCH_LOOP_USER_AGENT", "TradingResearchLoop/0.3.1"),
             extractor_provider=extractor_provider or value("RESEARCH_LOOP_EXTRACTOR", "local"),
             openai_api_key=provider_key,
             openai_model=model,

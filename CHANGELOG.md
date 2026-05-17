@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.1 - 2026-05-17
+
+- Added `health`, `backup`, and `ai-health` commands for safer 24/7 operation.
+- Added `records list`, `records show`, and `records evidence` inspection commands.
+- Added `sources performance` for source productivity review.
+- Added one retry for invalid AI JSON responses before falling back.
+- Logged hybrid AI fallback events to JSONL.
+- Added `digest --daily` for a 24-hour grouped digest.
+- Cleaned loop Ctrl+C shutdown behavior.
+
 ## 0.3.0 - 2026-05-17
 
 - Added SQLite-backed source registry, raw item storage, research records, evidence links, and source performance tables.

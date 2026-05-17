@@ -5,12 +5,13 @@ from pathlib import Path
 from .collectors import Collector, CollectorError, RedditCollector, RSSCollector
 from .config import Settings
 from .db import connect, init_db
+from .event_log import append_event
 from .extraction import LocalResearchExtractor, ResearchExtractor
 from .openai_extraction import OpenAIExtractionError, OpenAIResearchExtractor
 from .normalization import normalize_records
 from .repository import Repository
 from .seeds import DEFAULT_SOURCES
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from .utils import from_json, slugify, utc_now
 
@@ -91,19 +92,22 @@ def run_once(settings: Settings, extract_limit: int = 50) -> dict[str, int]:
     return {**collection, **extraction}
 
 
-def write_digest(settings: Settings, limit: int = 25) -> Path:
+def write_digest(settings: Settings, limit: int = 25, daily: bool = False) -> Path:
     settings.digest_dir.mkdir(parents=True, exist_ok=True)
     init_db(settings.db_path)
     with connect(settings.db_path) as connection:
         repo = Repository(connection)
-        rows = repo.digest_research_records(limit=limit)
+        rows = repo.digest_research_records(limit=500 if daily else limit)
+    if daily:
+        rows = _recent_rows(rows, hours=24)[:limit]
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    path = settings.digest_dir / f"research_digest_{timestamp}_{slugify(str(limit))}.md"
-    lines = [f"# Research Digest - {utc_now()}", ""]
+    prefix = "daily_research_digest" if daily else "research_digest"
+    path = settings.digest_dir / f"{prefix}_{timestamp}_{slugify(str(limit))}.md"
+    lines = [f"# {'Daily ' if daily else ''}Research Digest - {utc_now()}", ""]
     if not rows:
         lines.append("No research records yet.")
-    for row in rows:
+    for row in _digest_order(rows, daily=daily):
         scores = from_json(row["scores_json"], {})
         markets = ", ".join(from_json(row["markets_json"], [])) or "unknown"
         tags = ", ".join(from_json(row["tags_json"], [])[:8]) or "none"
@@ -126,6 +130,27 @@ def write_digest(settings: Settings, limit: int = 25) -> Path:
     return path
 
 
+def _recent_rows(rows, hours: int):
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+    recent = []
+    for row in rows:
+        try:
+            created_at = datetime.fromisoformat(row["created_at"])
+        except ValueError:
+            continue
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        if created_at >= cutoff:
+            recent.append(row)
+    return recent
+
+
+def _digest_order(rows, daily: bool):
+    if not daily:
+        return rows
+    return sorted(rows, key=lambda row: (row["record_type"], row["status"], row["title"]))
+
+
 def _collectors(settings: Settings) -> dict[str, Collector]:
     return {
         "rss": RSSCollector(settings),
@@ -144,6 +169,7 @@ def _extractor(settings: Settings) -> ResearchExtractor:
 
 class HybridResearchExtractor:
     def __init__(self, settings: Settings):
+        self.settings = settings
         self.openai = OpenAIResearchExtractor(settings)
         self.local = LocalResearchExtractor()
 
@@ -151,5 +177,15 @@ class HybridResearchExtractor:
         try:
             return self.openai.extract(raw_item)
         except OpenAIExtractionError as exc:
+            append_event(
+                self.settings.log_path,
+                "ai_fallback",
+                {
+                    "model": self.settings.openai_model,
+                    "source_id": raw_item["source_id"],
+                    "raw_item_id": raw_item["raw_item_id"],
+                    "error": str(exc),
+                },
+            )
             print(f"[extract] OpenAI failed; falling back to local: {exc}")
             return self.local.extract(raw_item)

@@ -71,6 +71,9 @@ python3 -m compileall research_loop tests
 python3 -m research_loop smoke-test
 python3 -m research_loop records repair-quality
 python3 -m research_loop sources health
+python3 -m research_loop sources performance
+python3 -m research_loop health
+python3 -m research_loop ai-health
 python3 -m research_loop records export --file /tmp/research_records.json --limit 25
 python3 -m research_loop monitor --once
 ```
@@ -94,6 +97,12 @@ Before long runs or repair commands:
 
 ```bash
 cp data/research_loop.sqlite3 data/research_loop.sqlite3.backup_$(date +%Y%m%d_%H%M%S)
+```
+
+Or use the built-in backup command:
+
+```bash
+python3 -m research_loop backup
 ```
 
 ## 24/7 Run Option

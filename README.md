@@ -1,6 +1,6 @@
 # Trading System
 
-Version: `0.3.0`
+Version: `0.3.1`
 
 This repo is being built as a multi-loop trading research system. The first working loop is the research loop.
 
@@ -107,9 +107,11 @@ python3 -m research_loop collect-once
 python3 -m research_loop extract-once
 python3 -m research_loop run-once
 python3 -m research_loop digest
+python3 -m research_loop digest --daily
 python3 -m research_loop list-records
 python3 -m research_loop add-raw --title "Funding spike idea" --text "Backtest whether BTC reverses after funding and open interest spike."
 python3 -m research_loop sources list
+python3 -m research_loop sources performance
 python3 -m research_loop sources validate --file loops/research_loop/sources.json
 python3 -m research_loop sources import --file loops/research_loop/sources.json
 python3 -m research_loop sources export --file /tmp/sources.json
@@ -118,10 +120,16 @@ python3 -m research_loop smoke-test
 python3 -m research_loop eval-extractor
 python3 -m research_loop monitor
 python3 -m research_loop monitor --once
+python3 -m research_loop records list --status needs_data
+python3 -m research_loop records show rec_example
+python3 -m research_loop records evidence rec_example
 python3 -m research_loop records archive --yes
 python3 -m research_loop records repair-quality
 python3 -m research_loop records export --file /tmp/research_records.json --limit 100
 python3 -m research_loop reprocess --status extracted --limit 25
+python3 -m research_loop health
+python3 -m research_loop ai-health
+python3 -m research_loop backup
 python3 -m research_loop stats
 python3 -m research_loop loop --sleep-seconds 900
 ```

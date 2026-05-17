@@ -239,6 +239,63 @@ class Repository:
             (limit,),
         ).fetchall()
 
+    def list_research_records(
+        self,
+        status: str | None = None,
+        record_type: str | None = None,
+        limit: int = 25,
+    ) -> list[sqlite3.Row]:
+        clauses = []
+        values: list[str | int] = []
+        if status:
+            clauses.append("status = ?")
+            values.append(status)
+        else:
+            clauses.append("status != 'archived'")
+        if record_type:
+            clauses.append("record_type = ?")
+            values.append(record_type)
+        values.append(limit)
+        where = " AND ".join(clauses)
+        return self.connection.execute(
+            f"""
+            SELECT *
+            FROM research_records
+            WHERE {where}
+            ORDER BY created_at DESC
+            LIMIT ?
+            """,
+            values,
+        ).fetchall()
+
+    def get_research_record(self, record_id: str) -> sqlite3.Row | None:
+        return self.connection.execute(
+            "SELECT * FROM research_records WHERE record_id = ?",
+            (record_id,),
+        ).fetchone()
+
+    def evidence_for_record(self, record_id: str) -> list[sqlite3.Row]:
+        return self.connection.execute(
+            """
+            SELECT evidence_links.relationship,
+                   evidence_links.summary,
+                   evidence_links.confidence,
+                   evidence_links.created_at,
+                   raw_items.raw_item_id,
+                   raw_items.source_id,
+                   raw_items.source_type,
+                   raw_items.url,
+                   raw_items.title,
+                   raw_items.published_at,
+                   raw_items.collected_at
+            FROM evidence_links
+            JOIN raw_items ON evidence_links.raw_item_id = raw_items.raw_item_id
+            WHERE evidence_links.record_id = ?
+            ORDER BY evidence_links.created_at ASC
+            """,
+            (record_id,),
+        ).fetchall()
+
     def mark_raw_item_processed(self, raw_item_id: str, status: str, relevance_score: float | None) -> None:
         self.connection.execute(
             """
@@ -566,6 +623,31 @@ class Repository:
             LIMIT ?
             """,
             (limit,),
+        ).fetchall()
+
+    def source_performance_summary(self) -> list[sqlite3.Row]:
+        return self.connection.execute(
+            """
+            SELECT sources.source_id,
+                   sources.source_type,
+                   sources.name,
+                   sources.status,
+                   sources.failure_count,
+                   source_performance.total_items_seen,
+                   source_performance.items_used,
+                   source_performance.records_created,
+                   CASE
+                       WHEN source_performance.total_items_seen = 0 THEN 0
+                       ELSE ROUND(
+                           CAST(source_performance.records_created AS REAL)
+                           / source_performance.total_items_seen,
+                           3
+                       )
+                   END AS records_per_raw_item
+            FROM sources
+            LEFT JOIN source_performance ON sources.source_id = source_performance.source_id
+            ORDER BY records_per_raw_item DESC, source_performance.records_created DESC, sources.name ASC
+            """
         ).fetchall()
 
     def count_table(self, table: str) -> int:

@@ -48,6 +48,10 @@ python3 -m research_loop loop --sleep-seconds 900
 python3 -m research_loop monitor
 python3 -m research_loop smoke-test
 python3 -m research_loop records export --file /tmp/research_records.json
+python3 -m research_loop records show rec_example
+python3 -m research_loop records evidence rec_example
+python3 -m research_loop health
+python3 -m research_loop backup
 ```
 
 ## v0.3.0 Delivered
@@ -65,3 +69,4 @@ Make this loop deployable and dependable enough that the next loops can build ag
 - Structured JSONL runtime logs
 - Record quality repair
 - Deployment runbook
+- Health, backup, AI health, and record inspection commands

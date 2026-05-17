@@ -10,6 +10,7 @@ from .evaluation import run_extractor_eval
 from .event_log import append_event
 from .monitor import render_monitor, run_monitor
 from .models import RawItem, Source
+from .ops import ai_health, backup_database, health_check
 from .pipeline import collect_once, extract_once, run_once, seed_sources, write_digest
 from .quality import repair_record_quality
 from .record_export import export_records
@@ -34,6 +35,7 @@ def main() -> None:
     sources_subparsers = sources_parser.add_subparsers(dest="sources_command", required=True)
     sources_subparsers.add_parser("list")
     sources_subparsers.add_parser("health")
+    sources_subparsers.add_parser("performance")
     sources_validate = sources_subparsers.add_parser("validate")
     sources_validate.add_argument("--file", type=Path, required=True)
     sources_import = sources_subparsers.add_parser("import")
@@ -59,12 +61,21 @@ def main() -> None:
 
     digest_parser = subparsers.add_parser("digest")
     digest_parser.add_argument("--limit", type=int, default=25)
+    digest_parser.add_argument("--daily", action="store_true")
 
     list_parser = subparsers.add_parser("list-records")
     list_parser.add_argument("--limit", type=int, default=20)
 
     records_parser = subparsers.add_parser("records")
     records_subparsers = records_parser.add_subparsers(dest="records_command", required=True)
+    records_list = records_subparsers.add_parser("list")
+    records_list.add_argument("--status", default=None)
+    records_list.add_argument("--type", default=None)
+    records_list.add_argument("--limit", type=int, default=25)
+    records_show = records_subparsers.add_parser("show")
+    records_show.add_argument("record_id")
+    records_evidence = records_subparsers.add_parser("evidence")
+    records_evidence.add_argument("record_id")
     records_archive = records_subparsers.add_parser("archive")
     records_archive.add_argument("--before", default=None)
     records_archive.add_argument("--yes", action="store_true")
@@ -86,6 +97,10 @@ def main() -> None:
     add_raw_parser.add_argument("--source-type", default="manual")
 
     subparsers.add_parser("stats")
+    backup_parser = subparsers.add_parser("backup")
+    backup_parser.add_argument("--dir", type=Path, default=Path("backups"))
+    subparsers.add_parser("health")
+    subparsers.add_parser("ai-health")
     subparsers.add_parser("smoke-test")
     subparsers.add_parser("eval-extractor")
     monitor_parser = subparsers.add_parser("monitor")
@@ -142,7 +157,7 @@ def main() -> None:
         return
 
     if args.command == "digest":
-        path = write_digest(settings, limit=args.limit)
+        path = write_digest(settings, limit=args.limit, daily=args.daily)
         print(f"wrote digest: {path}")
         return
 
@@ -171,6 +186,19 @@ def main() -> None:
 
     if args.command == "stats":
         _stats(settings)
+        return
+
+    if args.command == "backup":
+        path = backup_database(settings.db_path, args.dir)
+        print(f"backup={path}")
+        return
+
+    if args.command == "health":
+        _print_mapping(health_check(settings.db_path, settings.log_path))
+        return
+
+    if args.command == "ai-health":
+        _print_mapping(ai_health(settings.log_path))
         return
 
     if args.command == "smoke-test":
@@ -261,6 +289,19 @@ def _sources(settings: Settings, args) -> None:
                     f"failures={row['failure_count']}{error}"
                 )
             return
+        if args.sources_command == "performance":
+            rows = repo.source_performance_summary()
+            if not rows:
+                print("no sources found")
+                return
+            for row in rows:
+                print(
+                    f"{row['source_id']} | {row['source_type']} | {row['status']} | "
+                    f"raw={row['total_items_seen'] or 0} | used={row['items_used'] or 0} | "
+                    f"records={row['records_created'] or 0} | records_per_raw={row['records_per_raw_item'] or 0} | "
+                    f"failures={row['failure_count']}"
+                )
+            return
         if args.sources_command == "enable":
             updated = repo.set_source_status(args.source_id, "active")
         elif args.sources_command == "disable":
@@ -288,6 +329,15 @@ def _raw(settings: Settings, args) -> None:
 
 
 def _records(settings: Settings, args) -> None:
+    if args.records_command == "list":
+        _records_list(settings, status=args.status, record_type=args.type, limit=args.limit)
+        return
+    if args.records_command == "show":
+        _records_show(settings, args.record_id)
+        return
+    if args.records_command == "evidence":
+        _records_evidence(settings, args.record_id)
+        return
     if args.records_command == "export":
         path = export_records(settings.db_path, args.file, limit=args.limit, status=args.status)
         print(f"records_exported={path}")
@@ -305,6 +355,60 @@ def _records(settings: Settings, args) -> None:
         archived = repo.archive_research_records(before=args.before)
         connection.commit()
     print(f"records_archived={archived}")
+
+
+def _records_list(settings: Settings, status: str | None, record_type: str | None, limit: int) -> None:
+    init_db(settings.db_path)
+    with connect(settings.db_path) as connection:
+        repo = Repository(connection)
+        rows = repo.list_research_records(status=status, record_type=record_type, limit=limit)
+    if not rows:
+        print("no research records found")
+        return
+    for row in rows:
+        scores = from_json(row["scores_json"], {})
+        markets = ", ".join(from_json(row["markets_json"], [])) or "unknown"
+        print(f"{row['record_id']} | {scores.get('priority', 'n/a'):>3} | {row['status']} | {row['record_type']} | {markets} | {row['title']}")
+
+
+def _records_show(settings: Settings, record_id: str) -> None:
+    init_db(settings.db_path)
+    with connect(settings.db_path) as connection:
+        repo = Repository(connection)
+        row = repo.get_research_record(record_id)
+    if row is None:
+        print("record_not_found=1")
+        return
+    scores = from_json(row["scores_json"], {})
+    fields = {
+        "record_id": row["record_id"],
+        "title": row["title"],
+        "type": row["record_type"],
+        "status": row["status"],
+        "markets": ", ".join(from_json(row["markets_json"], [])) or "unknown",
+        "assets": ", ".join(from_json(row["assets_json"], [])) or "none",
+        "priority": scores.get("priority", "n/a"),
+        "confidence": scores.get("confidence", "n/a"),
+        "next_loops": ", ".join(from_json(row["next_loop_targets_json"], [])) or "none",
+        "summary": row["summary"],
+        "details": row["details"],
+    }
+    _print_mapping(fields)
+
+
+def _records_evidence(settings: Settings, record_id: str) -> None:
+    init_db(settings.db_path)
+    with connect(settings.db_path) as connection:
+        repo = Repository(connection)
+        rows = repo.evidence_for_record(record_id)
+    if not rows:
+        print("no evidence found")
+        return
+    for row in rows:
+        print(
+            f"{row['raw_item_id']} | {row['source_id']} | confidence={row['confidence']:.2f} | "
+            f"{row['relationship']} | {row['title']} | {row['url']}"
+        )
 
 
 def _reprocess(settings: Settings, status: str, limit: int) -> None:
@@ -384,3 +488,8 @@ def _smoke_test(settings: Settings) -> None:
 
 def _format_result(result: dict[str, int]) -> str:
     return " | ".join(f"{key}={value}" for key, value in result.items())
+
+
+def _print_mapping(values: dict) -> None:
+    for key, value in values.items():
+        print(f"{key}={value}")

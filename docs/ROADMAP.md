@@ -105,6 +105,7 @@ Purpose: make the research loop clean enough to run 24/7 while other loops are b
 
 ## After v0.3.0
 
+- v0.3.1 reliability patch: health checks, backups, AI fallback metrics, record inspection commands, source performance, and daily digest.
 - Validation loop: decide what should be backtested, researched more, ignored, or watched.
 - Backtest loop: convert selected strategy ideas into test specs and results.
 - Data loop: collect required market data for selected records.

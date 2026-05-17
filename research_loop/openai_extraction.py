@@ -124,13 +124,21 @@ class OpenAIResearchExtractor:
             "Authorization": f"Bearer {self.settings.openai_api_key}",
             "Content-Type": "application/json",
         }
-        response = self.http_post(
-            url,
-            payload,
-            headers,
-            self.settings.request_timeout_seconds,
-        )
-        parsed = _parse_chat_json(response) if self._use_chat_completions else _parse_response_json(response)
+        last_error: OpenAIExtractionError | None = None
+        for _ in range(2):
+            response = self.http_post(
+                url,
+                payload,
+                headers,
+                self.settings.request_timeout_seconds,
+            )
+            try:
+                parsed = _parse_chat_json(response) if self._use_chat_completions else _parse_response_json(response)
+                break
+            except OpenAIExtractionError as exc:
+                last_error = exc
+        else:
+            raise last_error or OpenAIExtractionError("OpenAI extraction failed")
         return _result_from_payload(parsed)
 
     @property

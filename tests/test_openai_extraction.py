@@ -182,3 +182,25 @@ def test_openai_extractor_normalizes_zero_relevance_when_records_exist() -> None
     result = OpenAIResearchExtractor(Settings(openai_api_key="test-key"), http_post=fake_post).extract(_raw_row())
 
     assert result.relevance_score == 0.7
+
+
+def test_openai_extractor_retries_once_on_invalid_model_json() -> None:
+    calls = {"count": 0}
+
+    def fake_post(url, payload, headers, timeout_seconds):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return {"output_text": "not json"}
+        return {
+            "output_text": """
+            {
+              "relevance_score": 0.5,
+              "records": []
+            }
+            """
+        }
+
+    result = OpenAIResearchExtractor(Settings(openai_api_key="test-key"), http_post=fake_post).extract(_raw_row())
+
+    assert calls["count"] == 2
+    assert result.records == []

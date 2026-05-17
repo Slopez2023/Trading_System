@@ -1,6 +1,6 @@
 [project]
 name = "trading-research-loop"
-version = "0.3.0"
+version = "0.3.1"
 description = "A source-backed research ingestion loop for trading strategy discovery."
 requires-python = ">=3.11"
 dependencies = []
