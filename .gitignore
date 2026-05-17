@@ -14,6 +14,8 @@ digests/*.md
 !digests/.gitkeep
 data/*.sqlite*
 data/*.db
+data/market/*
+!data/market/.gitkeep
 !data/.gitkeep
 logs/*.jsonl
 !logs/.gitkeep

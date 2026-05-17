@@ -84,3 +84,83 @@ It should answer:
 - What hypothesis should be tested?
 - What would invalidate the idea?
 - Should this go to backtesting, more research, watchlist, or archive?
+
+## Experiment Planner Loop Contract
+
+The experiment planner loop turns selected research records into strict experiment specs.
+
+Input:
+
+- `research_records`
+- `evidence_links` when source context is needed
+
+Output:
+
+- `experiment_specs`
+- `experiment_data_requirements`
+
+Primary downstream table:
+
+```text
+experiment_specs
+```
+
+Important fields:
+
+- `source_record_id`: source research record
+- `thesis`: testable claim
+- `experiment_type`: `signal_backtest`, `event_study`, or `risk_model`
+- `market` and `asset`
+- `timeframes_json`
+- `data_needed_json`
+- `entry_rule`
+- `exit_rule`
+- `cost_model_json`
+- `success_metric`
+- `reject_if`
+- `status`
+- `scores_json`: ROI/testability routing scores
+
+Rules:
+
+- The planner writes specs, not backtest code.
+- Backtests should consume specs through templates.
+- Data loops should consume `experiment_data_requirements`.
+
+## Data Loop Contract
+
+The data loop turns experiment requirements into local market datasets.
+
+Input:
+
+- `experiment_data_requirements`
+- `experiment_specs`
+
+Output:
+
+- `data_jobs`
+- `market_datasets`
+- local CSV files under `data/market/`
+
+Primary downstream table:
+
+```text
+market_datasets
+```
+
+Important fields:
+
+- `experiment_id`: experiment spec the data belongs to
+- `dataset_type`: `ohlcv`, `volume`, `funding_rates`, or `open_interest`
+- `provider`: initial MVP uses `binance_usdm`
+- `symbol`: initial MVP supports `BTCUSDT`
+- `timeframe`
+- `path`
+- `row_count`
+- `start_at` / `end_at`
+- `status`
+
+Rules:
+
+- Data collection marks source requirements `available` only after a dataset is written.
+- The MVP is BTC/Binance-only until strategy and backtest loops prove the path.

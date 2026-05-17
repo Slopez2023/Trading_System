@@ -13,13 +13,15 @@ dev = [
 
 [project.scripts]
 research-loop = "research_loop.cli:main"
+experiment-loop = "experiment_loop.cli:main"
+data-loop = "data_loop.cli:main"
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["research_loop*"]
+include = ["research_loop*", "experiment_loop*", "data_loop*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
