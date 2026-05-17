@@ -197,11 +197,14 @@ def main() -> None:
 
 def _loop(settings: Settings, sleep_seconds: int, limit: int) -> None:
     print(f"starting research loop with db={settings.db_path}")
-    while True:
-        result = run_once(settings, extract_limit=limit)
-        append_event(settings.log_path, "loop_cycle", result)
-        print(_format_result(result))
-        time.sleep(sleep_seconds)
+    try:
+        while True:
+            result = run_once(settings, extract_limit=limit)
+            append_event(settings.log_path, "loop_cycle", result)
+            print(_format_result(result))
+            time.sleep(sleep_seconds)
+    except KeyboardInterrupt:
+        print("\nstopped research loop")
 
 
 def _list_records(settings: Settings, limit: int) -> None:
