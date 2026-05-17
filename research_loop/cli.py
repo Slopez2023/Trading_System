@@ -7,10 +7,13 @@ from pathlib import Path
 from .config import DEFAULT_DB_PATH, DEFAULT_DIGEST_DIR, Settings
 from .db import connect, init_db
 from .evaluation import run_extractor_eval
+from .event_log import append_event
 from .monitor import render_monitor, run_monitor
 from .models import RawItem, Source
 from .pipeline import collect_once, extract_once, run_once, seed_sources, write_digest
+from .record_export import export_records
 from .repository import Repository
+from .source_config import SourceConfigError, load_source_config, write_source_config
 from .utils import from_json
 
 
@@ -30,6 +33,12 @@ def main() -> None:
     sources_subparsers = sources_parser.add_subparsers(dest="sources_command", required=True)
     sources_subparsers.add_parser("list")
     sources_subparsers.add_parser("health")
+    sources_validate = sources_subparsers.add_parser("validate")
+    sources_validate.add_argument("--file", type=Path, required=True)
+    sources_import = sources_subparsers.add_parser("import")
+    sources_import.add_argument("--file", type=Path, required=True)
+    sources_export = sources_subparsers.add_parser("export")
+    sources_export.add_argument("--file", type=Path, required=True)
     source_enable = sources_subparsers.add_parser("enable")
     source_enable.add_argument("source_id")
     source_disable = sources_subparsers.add_parser("disable")
@@ -58,6 +67,10 @@ def main() -> None:
     records_archive = records_subparsers.add_parser("archive")
     records_archive.add_argument("--before", default=None)
     records_archive.add_argument("--yes", action="store_true")
+    records_export = records_subparsers.add_parser("export")
+    records_export.add_argument("--file", type=Path, required=True)
+    records_export.add_argument("--limit", type=int, default=100)
+    records_export.add_argument("--status", default=None)
 
     reprocess_parser = subparsers.add_parser("reprocess")
     reprocess_parser.add_argument("--status", default="extracted")
@@ -102,6 +115,7 @@ def main() -> None:
 
     if args.command == "collect-once":
         result = collect_once(settings)
+        append_event(settings.log_path, "collect_once", result)
         print(_format_result(result))
         return
 
@@ -115,11 +129,13 @@ def main() -> None:
 
     if args.command == "extract-once":
         result = extract_once(settings, limit=args.limit)
+        append_event(settings.log_path, "extract_once", result)
         print(_format_result(result))
         return
 
     if args.command == "run-once":
         result = run_once(settings, extract_limit=args.limit)
+        append_event(settings.log_path, "run_once", result)
         print(_format_result(result))
         return
 
@@ -181,6 +197,7 @@ def _loop(settings: Settings, sleep_seconds: int, limit: int) -> None:
     print(f"starting research loop with db={settings.db_path}")
     while True:
         result = run_once(settings, extract_limit=limit)
+        append_event(settings.log_path, "loop_cycle", result)
         print(_format_result(result))
         time.sleep(sleep_seconds)
 
@@ -201,8 +218,31 @@ def _list_records(settings: Settings, limit: int) -> None:
 
 def _sources(settings: Settings, args) -> None:
     init_db(settings.db_path)
+    if args.sources_command == "validate":
+        try:
+            sources = load_source_config(args.file)
+        except (OSError, SourceConfigError, ValueError) as exc:
+            print(f"source_config_valid=0 | error={exc}")
+            return
+        print(f"source_config_valid=1 | sources={len(sources)}")
+        return
     with connect(settings.db_path) as connection:
         repo = Repository(connection)
+        if args.sources_command == "import":
+            try:
+                sources = load_source_config(args.file)
+            except (OSError, SourceConfigError, ValueError) as exc:
+                print(f"sources_imported=0 | error={exc}")
+                return
+            for source in sources:
+                repo.upsert_source(source)
+            connection.commit()
+            print(f"sources_imported={len(sources)}")
+            return
+        if args.sources_command == "export":
+            path = write_source_config(args.file, repo.list_all_source_objects())
+            print(f"sources_exported={path}")
+            return
         if args.sources_command in {"list", "health"}:
             rows = repo.list_sources()
             if not rows:
@@ -243,6 +283,10 @@ def _raw(settings: Settings, args) -> None:
 
 
 def _records(settings: Settings, args) -> None:
+    if args.records_command == "export":
+        path = export_records(settings.db_path, args.file, limit=args.limit, status=args.status)
+        print(f"records_exported={path}")
+        return
     if args.records_command == "archive" and not args.yes:
         print("refusing to archive without --yes")
         return

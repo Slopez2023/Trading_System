@@ -64,12 +64,12 @@ Purpose: make the research loop clean enough to run 24/7 while other loops are b
 
 ### Source Management
 
-- [ ] Add `sources.yaml`
-- [ ] Add source import command
-- [ ] Add source export command
+- [x] Add `loops/research_loop/sources.json`
+- [x] Add source import command
+- [x] Add source export command
 - [ ] Add source validation before activation
 - [ ] Add source categories: `social`, `news`, `exchange`, `research`, `market_data`, `filing`
-- [ ] Add first exchange announcement source pack
+- [x] Add first exchange candidate source
 - [ ] Add first market/news RSS source pack
 - [ ] Add source candidate approval workflow
 
@@ -77,7 +77,7 @@ Purpose: make the research loop clean enough to run 24/7 while other loops are b
 
 - [x] Document local `.env` setup
 - [x] Document monitor and smoke-test commands
-- [ ] Add structured logging
+- [x] Add structured logging
 - [ ] Add deployment runbook for local Mac/server
 - [ ] Add restart recommendation: launchd, systemd, tmux, or supervisor
 - [ ] Add database backup instructions
@@ -89,7 +89,7 @@ Purpose: make the research loop clean enough to run 24/7 while other loops are b
 - [x] Normalize statuses, markets, risks, scores, and loop targets
 - [x] Preserve weird/early ideas instead of filtering hard
 - [x] Merge obvious duplicates conservatively
-- [ ] Add record export command for downstream loops
+- [x] Add record export command for downstream loops
 - [ ] Add source-quality summary command
 - [ ] Add daily digest command with stable naming
 

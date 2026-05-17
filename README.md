@@ -110,12 +110,16 @@ python3 -m research_loop digest
 python3 -m research_loop list-records
 python3 -m research_loop add-raw --title "Funding spike idea" --text "Backtest whether BTC reverses after funding and open interest spike."
 python3 -m research_loop sources list
+python3 -m research_loop sources validate --file loops/research_loop/sources.json
+python3 -m research_loop sources import --file loops/research_loop/sources.json
+python3 -m research_loop sources export --file /tmp/sources.json
 python3 -m research_loop raw list --status pending
 python3 -m research_loop smoke-test
 python3 -m research_loop eval-extractor
 python3 -m research_loop monitor
 python3 -m research_loop monitor --once
 python3 -m research_loop records archive --yes
+python3 -m research_loop records export --file /tmp/research_records.json --limit 100
 python3 -m research_loop reprocess --status extracted --limit 25
 python3 -m research_loop stats
 python3 -m research_loop loop --sleep-seconds 900
@@ -180,6 +184,7 @@ Runtime files are ignored by git:
 ```text
 data/*.sqlite3
 digests/*.md
+logs/*.jsonl
 .env
 ```
 
@@ -187,7 +192,7 @@ digests/*.md
 
 The next target is making this loop deployment-ready so the rest of the system can build on top of it:
 
-- Source config file and import/export commands.
+- JSON source config file and import/export commands.
 - Better source packs for exchange, news, Reddit, and RSS feeds.
 - Structured logs and a simple 24/7 runbook.
 - Stable downstream output contract.

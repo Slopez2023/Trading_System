@@ -41,11 +41,11 @@ Detailed scope is in [ROADMAP.md](ROADMAP.md). Keep this checklist short.
 ## v0.3.0 Target
 
 - [x] Strong AI extraction flow
-- [ ] Config-file source management
+- [x] Config-file source management
 - [x] Reliable loop behavior
 - [x] Better tests
 - [x] Clear setup docs
 - [ ] Deployment runbook
-- [ ] Structured logs
+- [x] Structured logs
 - [ ] Source packs
-- [ ] Downstream export command
+- [x] Downstream export command

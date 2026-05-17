@@ -72,6 +72,16 @@ class Repository:
         ).fetchall()
         return [self._source_from_row(row) for row in rows]
 
+    def list_all_source_objects(self) -> list[Source]:
+        rows = self.connection.execute(
+            """
+            SELECT *
+            FROM sources
+            ORDER BY source_type, name
+            """
+        ).fetchall()
+        return [self._source_from_row(row) for row in rows]
+
     def list_sources(self) -> list[sqlite3.Row]:
         return self.connection.execute(
             """

@@ -1,0 +1,131 @@
+{
+  "version": 1,
+  "sources": [
+    {
+      "category": "social",
+      "check_frequency_minutes": 120,
+      "markets": [
+        "stocks",
+        "crypto",
+        "futures",
+        "forex"
+      ],
+      "name": "r/algotrading new",
+      "noise_score": 0.45,
+      "quality_score": 0.68,
+      "source_id": "reddit_algotrading_new",
+      "source_type": "reddit",
+      "status": "active",
+      "topics": [
+        "quant",
+        "backtesting",
+        "strategy design"
+      ],
+      "url": "https://www.reddit.com/r/algotrading/new.json?limit=25"
+    },
+    {
+      "category": "social",
+      "check_frequency_minutes": 120,
+      "markets": [
+        "options",
+        "stocks"
+      ],
+      "name": "r/options new",
+      "noise_score": 0.62,
+      "quality_score": 0.55,
+      "source_id": "reddit_options_new",
+      "source_type": "reddit",
+      "status": "active",
+      "topics": [
+        "volatility",
+        "positioning",
+        "risk"
+      ],
+      "url": "https://www.reddit.com/r/options/new.json?limit=25"
+    },
+    {
+      "category": "social",
+      "check_frequency_minutes": 120,
+      "markets": [
+        "crypto"
+      ],
+      "name": "r/CryptoCurrency new",
+      "noise_score": 0.72,
+      "quality_score": 0.48,
+      "source_id": "reddit_cryptocurrency_new",
+      "source_type": "reddit",
+      "status": "active",
+      "topics": [
+        "sentiment",
+        "narratives",
+        "exchange behavior"
+      ],
+      "url": "https://www.reddit.com/r/CryptoCurrency/new.json?limit=25"
+    },
+    {
+      "category": "research",
+      "check_frequency_minutes": 1440,
+      "markets": [
+        "stocks",
+        "futures",
+        "forex",
+        "crypto"
+      ],
+      "name": "arXiv q-fin",
+      "noise_score": 0.35,
+      "quality_score": 0.74,
+      "source_id": "arxiv_qfin",
+      "source_type": "rss",
+      "status": "active",
+      "topics": [
+        "papers",
+        "quant research",
+        "market microstructure"
+      ],
+      "url": "https://export.arxiv.org/rss/q-fin"
+    },
+    {
+      "category": "filing",
+      "check_frequency_minutes": 360,
+      "markets": [
+        "stocks",
+        "options"
+      ],
+      "name": "SEC press releases",
+      "noise_score": 0.25,
+      "quality_score": 0.7,
+      "source_id": "sec_press_releases",
+      "source_type": "rss",
+      "status": "active",
+      "topics": [
+        "regulation",
+        "enforcement",
+        "market structure"
+      ],
+      "url": "https://www.sec.gov/news/pressreleases.rss"
+    },
+    {
+      "category": "exchange",
+      "check_frequency_minutes": 1440,
+      "markets": [
+        "futures",
+        "options"
+      ],
+      "metadata": {
+        "review_note": "Official CME RSS index verified. Add individual feed URL after choosing the notice category."
+      },
+      "name": "CME RSS feed index candidate",
+      "noise_score": 0.35,
+      "quality_score": 0.72,
+      "source_id": "cme_rss_index_candidate",
+      "source_type": "manual",
+      "status": "candidate",
+      "topics": [
+        "exchange notices",
+        "press releases",
+        "market structure"
+      ],
+      "url": "https://www.cmegroup.com/rss.html"
+    }
+  ]
+}

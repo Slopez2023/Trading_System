@@ -42,11 +42,12 @@ This folder owns the loop-level docs and contract. The code package stays at the
 
 ```bash
 python3 -m research_loop init-db
-python3 -m research_loop seed-sources
+python3 -m research_loop sources import --file loops/research_loop/sources.json
 python3 -m research_loop run-once
 python3 -m research_loop loop --sleep-seconds 900
 python3 -m research_loop monitor
 python3 -m research_loop smoke-test
+python3 -m research_loop records export --file /tmp/research_records.json
 ```
 
 ## v0.3.0 Goal
@@ -61,11 +62,11 @@ Done:
 - Normalization
 - Conservative duplicate merging
 - Evidence preservation
+- JSON source config import/export
+- Downstream record export
+- Structured JSONL runtime logs
 
 Still needed:
 
-- Config-file source management
-- Source packs
-- Structured logs
+- More source packs
 - Deployment runbook completion
-- Downstream export command

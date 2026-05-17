@@ -63,3 +63,26 @@ def test_settings_defaults_to_cheap_openrouter_model(tmp_path, monkeypatch) -> N
 
     assert settings.openai_model == "deepseek/deepseek-v4-flash"
     assert settings.max_output_tokens == 1200
+
+
+def test_settings_loads_runtime_paths_from_env_file(tmp_path, monkeypatch) -> None:
+    monkeypatch.delenv("RESEARCH_LOOP_DB_PATH", raising=False)
+    monkeypatch.delenv("RESEARCH_LOOP_DIGEST_DIR", raising=False)
+    monkeypatch.delenv("RESEARCH_LOOP_LOG_PATH", raising=False)
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "\n".join(
+            [
+                f"RESEARCH_LOOP_DB_PATH={tmp_path / 'custom.sqlite3'}",
+                f"RESEARCH_LOOP_DIGEST_DIR={tmp_path / 'custom_digests'}",
+                f"RESEARCH_LOOP_LOG_PATH={tmp_path / 'custom_logs' / 'events.jsonl'}",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    settings = Settings.from_env(env_path=env_file)
+
+    assert settings.db_path == tmp_path / "custom.sqlite3"
+    assert settings.digest_dir == tmp_path / "custom_digests"
+    assert settings.log_path == tmp_path / "custom_logs" / "events.jsonl"

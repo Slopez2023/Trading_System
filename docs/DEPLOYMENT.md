@@ -21,13 +21,14 @@ OPENAI_MODEL=deepseek/deepseek-v4-flash
 RESEARCH_LOOP_MAX_OUTPUT_TOKENS=1200
 RESEARCH_LOOP_DB_PATH=data/research_loop.sqlite3
 RESEARCH_LOOP_DIGEST_DIR=digests
+RESEARCH_LOOP_LOG_PATH=logs/research_loop.jsonl
 ```
 
 ## First Run
 
 ```bash
 python3 -m research_loop init-db
-python3 -m research_loop seed-sources
+python3 -m research_loop sources import --file loops/research_loop/sources.json
 python3 -m research_loop smoke-test
 python3 -m research_loop monitor --once
 ```
@@ -69,6 +70,7 @@ python3 -m pytest
 python3 -m compileall research_loop tests
 python3 -m research_loop smoke-test
 python3 -m research_loop sources health
+python3 -m research_loop records export --file /tmp/research_records.json --limit 25
 python3 -m research_loop monitor --once
 ```
 
@@ -82,14 +84,15 @@ data/research_loop.sqlite3
 data/research_loop.sqlite3-wal
 data/research_loop.sqlite3-shm
 digests/*.md
+logs/*.jsonl
 ```
 
 ## v0.3.0 Deployment Gaps
 
 Before calling this deployment-ready:
 
-- [ ] Add structured logs.
-- [ ] Add source config import/export.
+- [x] Add structured logs.
+- [x] Add source config import/export.
 - [ ] Add database backup instructions.
 - [ ] Add a restart wrapper using launchd, systemd, tmux, or supervisor.
 - [ ] Add a production release checklist.
