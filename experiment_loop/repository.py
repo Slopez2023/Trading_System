@@ -18,6 +18,14 @@ class ExperimentRepository:
             FROM research_records
             WHERE status != 'archived'
               AND record_type IN ('strategy_idea', 'risk_warning')
+              AND (
+                  json_array_length(next_loop_targets_json) = 0
+                  OR EXISTS (
+                      SELECT 1
+                      FROM json_each(next_loop_targets_json)
+                      WHERE value = 'experiment_loop'
+                  )
+              )
             ORDER BY
                 CAST(json_extract(scores_json, '$.priority') AS INTEGER) DESC,
                 updated_at DESC
@@ -117,6 +125,26 @@ class ExperimentRepository:
 
     def _sync_data_requirements(self, experiment_id: str, data_needed: list[str], now: str) -> None:
         cleaned = _dedupe(data_needed)
+        if cleaned:
+            placeholders = ", ".join("?" for _ in cleaned)
+            self.connection.execute(
+                f"""
+                UPDATE experiment_data_requirements
+                SET status = 'obsolete', updated_at = ?
+                WHERE experiment_id = ?
+                  AND data_name NOT IN ({placeholders})
+                """,
+                (now, experiment_id, *cleaned),
+            )
+        else:
+            self.connection.execute(
+                """
+                UPDATE experiment_data_requirements
+                SET status = 'obsolete', updated_at = ?
+                WHERE experiment_id = ?
+                """,
+                (now, experiment_id),
+            )
         for data_name in cleaned:
             requirement_hash = content_hash(experiment_id, data_name)
             self.connection.execute(
@@ -126,6 +154,10 @@ class ExperimentRepository:
                 )
                 VALUES (?, ?, ?, 'needed', ?, ?)
                 ON CONFLICT(experiment_id, data_name) DO UPDATE SET
+                    status = CASE
+                        WHEN experiment_data_requirements.status = 'obsolete' THEN 'needed'
+                        ELSE experiment_data_requirements.status
+                    END,
                     updated_at = excluded.updated_at
                 """,
                 (f"req_{requirement_hash[:16]}", experiment_id, data_name, now, now),
