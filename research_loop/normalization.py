@@ -27,6 +27,18 @@ MARKET_ALIASES = {
     "options": "options",
 }
 
+BROAD_MARKETS = {"crypto", "forex", "futures", "options", "stocks"}
+
+SCORE_KEYS = {
+    "priority",
+    "novelty",
+    "testability",
+    "data_availability",
+    "urgency",
+    "confidence",
+    "source_quality",
+}
+
 
 def normalize_record(record: ResearchRecord) -> ResearchRecord:
     required_data = _clean_list(record.required_data)
@@ -93,10 +105,17 @@ def _normalize_markets(record: ResearchRecord) -> list[str]:
             " ".join(record.tags),
         ]
     ).lower()
+    inferred = []
     for needle, market in MARKET_ALIASES.items():
         if needle in text:
-            markets.append(market)
-    return _clean_list(markets)
+            inferred.append(market)
+    inferred = _clean_list(inferred)
+    broad_markets = [market for market in markets if market in BROAD_MARKETS]
+    if len(broad_markets) >= 4 and len(broad_markets) == len(markets):
+        return inferred
+    if inferred and len(broad_markets) >= 2 and len(broad_markets) == len(markets):
+        return inferred
+    return _clean_list([*markets, *inferred])
 
 
 def _status(record: ResearchRecord, required_data: list[str], risks: list[str], targets: list[str]) -> str:
@@ -115,7 +134,7 @@ def _status(record: ResearchRecord, required_data: list[str], risks: list[str], 
 
 
 def _normalize_scores(scores: dict[str, int], record_type: str) -> dict[str, int]:
-    normalized = {}
+    normalized = _score_defaults(record_type)
     for key, value in scores.items():
         try:
             normalized[key] = max(0, min(int(value), 100))
@@ -133,7 +152,30 @@ def _normalize_scores(scores: dict[str, int], record_type: str) -> dict[str, int
     if record_type == "strategy_idea":
         normalized["priority"] = max(normalized.get("priority", 0), 45)
         normalized["testability"] = max(normalized.get("testability", 0), 45)
+    for key in SCORE_KEYS:
+        normalized.setdefault(key, 50)
     return normalized
+
+
+def _score_defaults(record_type: str) -> dict[str, int]:
+    defaults = {
+        "priority": 35,
+        "novelty": 45,
+        "testability": 35,
+        "data_availability": 40,
+        "urgency": 35,
+        "confidence": 50,
+        "source_quality": 50,
+    }
+    if record_type == "strategy_idea":
+        defaults.update({"priority": 50, "testability": 55, "data_availability": 45})
+    elif record_type == "risk_warning":
+        defaults.update({"priority": 60, "testability": 20, "urgency": 55})
+    elif record_type == "data_source":
+        defaults.update({"priority": 45, "testability": 40, "data_availability": 70})
+    elif record_type == "event_catalyst":
+        defaults.update({"priority": 50, "urgency": 60})
+    return defaults
 
 
 def _risks_from_text(record: ResearchRecord) -> list[str]:

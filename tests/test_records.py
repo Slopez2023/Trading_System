@@ -119,3 +119,48 @@ def test_insert_research_record_merges_obvious_duplicate(tmp_path) -> None:
     assert "slippage" in risks
     assert "liquidation risk" in risks
     assert evidence_count == 2
+
+
+def test_digest_records_backfills_with_archived_queue_when_active_is_small(tmp_path) -> None:
+    db_path = tmp_path / "research.sqlite3"
+    init_db(db_path)
+    with connect(db_path) as connection:
+        repo = Repository(connection)
+        repo.upsert_source(Source(source_id="manual", source_type="manual", name="Manual", url="manual://input"))
+        repo.insert_raw_items(
+            [
+                RawItem(source_id="manual", source_type="manual", url="manual://1", title="Active", text="BTC funding."),
+                RawItem(source_id="manual", source_type="manual", url="manual://2", title="Old", text="Options skew."),
+            ]
+        )
+        first_raw, second_raw = repo.claim_pending_raw_items(limit=2)
+        repo.insert_research_record(
+            ResearchRecord(
+                record_type="strategy_idea",
+                title="BTC funding reversal",
+                summary="Backtest BTC funding reversal.",
+                markets=["crypto"],
+                scores={"priority": 70},
+                status="needs_data",
+            ),
+            first_raw["raw_item_id"],
+        )
+        repo.insert_research_record(
+            ResearchRecord(
+                record_type="market_observation",
+                title="Options skew observation",
+                summary="Watch options skew.",
+                markets=["options"],
+                scores={"priority": 60},
+                status="needs_review",
+            ),
+            second_raw["raw_item_id"],
+        )
+        connection.execute("UPDATE research_records SET status = 'archived' WHERE title = 'Options skew observation'")
+        connection.commit()
+
+    with connect(db_path) as connection:
+        repo = Repository(connection)
+        rows = repo.digest_research_records(limit=2)
+
+    assert [row["title"] for row in rows] == ["BTC funding reversal", "Options skew observation"]

@@ -453,6 +453,30 @@ class Repository:
             (limit,),
         ).fetchall()
 
+    def digest_research_records(self, limit: int = 25) -> list[sqlite3.Row]:
+        active_rows = self.connection.execute(
+            """
+            SELECT *
+            FROM research_records
+            WHERE status != 'archived'
+            ORDER BY updated_at DESC
+            LIMIT 500
+            """
+        ).fetchall()
+        selected = _diverse_records(active_rows, limit)
+        if len(selected) >= limit:
+            return selected
+        archived_rows = self.connection.execute(
+            """
+            SELECT *
+            FROM research_records
+            WHERE status = 'archived'
+            ORDER BY updated_at DESC
+            LIMIT 500
+            """
+        ).fetchall()
+        return _diverse_records([*selected, *archived_rows], limit)
+
     def archive_research_records(self, before: str | None = None) -> int:
         if before:
             cursor = self.connection.execute(
@@ -619,3 +643,33 @@ def _stronger_status(existing: str, new: str) -> str:
         "captured": 1,
     }
     return new if rank.get(new, 1) >= rank.get(existing, 1) else existing
+
+
+def _diverse_records(rows: list[sqlite3.Row], limit: int) -> list[sqlite3.Row]:
+    selected = []
+    seen_fingerprints = set()
+    sorted_rows = sorted(rows, key=_record_digest_sort_key)
+    for row in sorted_rows:
+        fingerprint = row["fingerprint"] or row["content_hash"]
+        if fingerprint in seen_fingerprints:
+            continue
+        selected.append(row)
+        seen_fingerprints.add(fingerprint)
+        if len(selected) >= limit:
+            return selected
+    if len(selected) >= limit:
+        return selected
+    for row in sorted_rows:
+        if row["record_id"] in {selected_row["record_id"] for selected_row in selected}:
+            continue
+        selected.append(row)
+        if len(selected) >= limit:
+            break
+    return selected
+
+
+def _record_digest_sort_key(row: sqlite3.Row) -> tuple[int, int, str]:
+    scores = from_json(row["scores_json"], {})
+    priority = int(scores.get("priority", 0) or 0)
+    archived_penalty = 1 if row["status"] == "archived" else 0
+    return (archived_penalty, -priority, row["updated_at"])

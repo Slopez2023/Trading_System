@@ -33,3 +33,4 @@
 - Added score floors for normalized risk warnings and strategy ideas.
 - Added loop-based repo docs, downstream loop contract, and deployment planning docs.
 - Added JSON source config import/export, record export for downstream loops, and structured JSONL runtime logging.
+- Added record quality repair for blank fingerprints, broad market buckets, partial scores, and broader digest selection.

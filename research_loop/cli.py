@@ -11,6 +11,7 @@ from .event_log import append_event
 from .monitor import render_monitor, run_monitor
 from .models import RawItem, Source
 from .pipeline import collect_once, extract_once, run_once, seed_sources, write_digest
+from .quality import repair_record_quality
 from .record_export import export_records
 from .repository import Repository
 from .source_config import SourceConfigError, load_source_config, write_source_config
@@ -67,6 +68,7 @@ def main() -> None:
     records_archive = records_subparsers.add_parser("archive")
     records_archive.add_argument("--before", default=None)
     records_archive.add_argument("--yes", action="store_true")
+    records_subparsers.add_parser("repair-quality")
     records_export = records_subparsers.add_parser("export")
     records_export.add_argument("--file", type=Path, required=True)
     records_export.add_argument("--limit", type=int, default=100)
@@ -286,6 +288,10 @@ def _records(settings: Settings, args) -> None:
     if args.records_command == "export":
         path = export_records(settings.db_path, args.file, limit=args.limit, status=args.status)
         print(f"records_exported={path}")
+        return
+    if args.records_command == "repair-quality":
+        result = repair_record_quality(settings.db_path)
+        print(_format_result(result))
         return
     if args.records_command == "archive" and not args.yes:
         print("refusing to archive without --yes")

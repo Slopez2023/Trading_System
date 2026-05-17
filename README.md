@@ -119,6 +119,7 @@ python3 -m research_loop eval-extractor
 python3 -m research_loop monitor
 python3 -m research_loop monitor --once
 python3 -m research_loop records archive --yes
+python3 -m research_loop records repair-quality
 python3 -m research_loop records export --file /tmp/research_records.json --limit 100
 python3 -m research_loop reprocess --status extracted --limit 25
 python3 -m research_loop stats
@@ -159,6 +160,7 @@ soft statuses
 market cleanup
 data/risk cleanup
 score bounds
+fingerprint repair
 ```
 
 More detail:

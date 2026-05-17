@@ -37,6 +37,7 @@ Detailed scope is in [ROADMAP.md](ROADMAP.md). Keep this checklist short.
 - [x] OpenRouter-compatible AI extraction
 - [x] Record normalization
 - [x] Conservative dedupe with evidence preservation
+- [x] Record quality repair command
 
 ## v0.3.0 Target
 

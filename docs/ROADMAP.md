@@ -89,6 +89,7 @@ Purpose: make the research loop clean enough to run 24/7 while other loops are b
 - [x] Normalize statuses, markets, risks, scores, and loop targets
 - [x] Preserve weird/early ideas instead of filtering hard
 - [x] Merge obvious duplicates conservatively
+- [x] Add record quality repair for fingerprints, broad markets, and score shape
 - [x] Add record export command for downstream loops
 - [ ] Add source-quality summary command
 - [ ] Add daily digest command with stable naming

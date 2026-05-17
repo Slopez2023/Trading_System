@@ -96,7 +96,7 @@ def write_digest(settings: Settings, limit: int = 25) -> Path:
     init_db(settings.db_path)
     with connect(settings.db_path) as connection:
         repo = Repository(connection)
-        rows = repo.recent_research_records(limit=limit)
+        rows = repo.digest_research_records(limit=limit)
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     path = settings.digest_dir / f"research_digest_{timestamp}_{slugify(str(limit))}.md"

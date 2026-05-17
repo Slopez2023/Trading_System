@@ -57,3 +57,38 @@ def test_normalizer_marks_ready_strategy_without_data_gap() -> None:
 
     assert normalized.status == "ready_for_backtest"
     assert "backtest_loop" in normalized.next_loop_targets
+
+
+def test_normalizer_removes_overbroad_market_bucket_when_inference_exists() -> None:
+    record = ResearchRecord(
+        record_type="risk_warning",
+        title="deBridge hidden fee risk",
+        summary="Hidden bridge fees can erase crypto arbitrage edge.",
+        markets=["crypto", "forex", "futures", "options", "stocks"],
+        scores={"priority": 70},
+    )
+
+    normalized = normalize_record(record)
+
+    assert normalized.markets == ["crypto"]
+
+
+def test_normalizer_populates_full_score_shape() -> None:
+    record = ResearchRecord(
+        record_type="strategy_idea",
+        title="Momentum breakout",
+        summary="Backtest volume breakout.",
+        scores={"priority": 70},
+    )
+
+    normalized = normalize_record(record)
+
+    assert set(normalized.scores) >= {
+        "priority",
+        "novelty",
+        "testability",
+        "data_availability",
+        "urgency",
+        "confidence",
+        "source_quality",
+    }

@@ -69,6 +69,7 @@ Run these before leaving the loop running:
 python3 -m pytest
 python3 -m compileall research_loop tests
 python3 -m research_loop smoke-test
+python3 -m research_loop records repair-quality
 python3 -m research_loop sources health
 python3 -m research_loop records export --file /tmp/research_records.json --limit 25
 python3 -m research_loop monitor --once
