@@ -61,3 +61,23 @@ The mature version should include:
 - Dashboard review workflow
 - Scheduled 24/7 deployment
 - Human approval paths for source changes
+
+## Loop System Direction
+
+The research loop is the first loop, not the full system.
+
+```text
+Research Loop
+  -> broad source-backed idea capture
+
+Validation Loop
+  -> decide what deserves data, backtesting, or review
+
+Backtest/Data Loops
+  -> test selected ideas and gather required datasets
+
+Execution Loop
+  -> only acts on approved, tested, risk-checked outputs
+```
+
+Each loop should have its own folder, docs, tests, and output contract.

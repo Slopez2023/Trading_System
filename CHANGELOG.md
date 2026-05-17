@@ -11,7 +11,7 @@
 
 ## Unreleased
 
-- Added OpenAI extraction provider using structured JSON output.
+- Added OpenAI-compatible extraction provider using structured JSON output.
 - Added `local`, `openai`, and `hybrid` extractor modes.
 - Added environment-based OpenAI configuration.
 - Added local `.env` loading for OpenAI configuration.
@@ -31,3 +31,4 @@
 - Added conservative duplicate fingerprinting and evidence-preserving merge behavior.
 - Improved duplicate matching for common crypto perpetual market aliases.
 - Added score floors for normalized risk warnings and strategy ideas.
+- Added loop-based repo docs, downstream loop contract, and deployment planning docs.

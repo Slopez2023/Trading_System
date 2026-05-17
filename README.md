@@ -1,16 +1,31 @@
-# Trading Research Loop
+# Trading System
 
 Version: `0.1.0`
 
-This is the first version of the 24/7 research ingestion loop.
+This repo is being built as a multi-loop trading research system. The first working loop is the research loop.
 
-Its job is narrow:
+The research loop's job is narrow:
 
 ```text
 Sources -> raw saved evidence -> extracted research records -> digest / downstream queues
 ```
 
 It does not trade, place orders, or build bots. It creates a source-backed research inbox that other loops can consume later.
+
+## Repo Shape
+
+```text
+loops/
+  research_loop/        loop docs, contract, deployment notes
+research_loop/          Python package for the research loop CLI
+tests/                  automated tests
+docs/                   system docs and roadmap
+prompts/                AI extraction prompt intent
+data/                   ignored local SQLite runtime files
+digests/                ignored local Markdown digest output
+```
+
+Future loops should get their own folder under `loops/`, then consume the research loop through the documented database/export contract instead of reaching into random internals.
 
 ## What v0.1.0 Includes
 
@@ -19,10 +34,12 @@ It does not trade, place orders, or build bots. It creates a source-backed resea
 - RSS and Reddit JSON collectors.
 - Raw item deduplication by URL and content hash.
 - A deterministic local extractor that creates useful records without an API key.
-- Optional OpenAI extractor for AI-backed research extraction.
-- Hybrid extractor mode that uses OpenAI with local fallback.
+- Optional OpenRouter/OpenAI-compatible extractor for AI-backed research extraction.
+- Hybrid extractor mode that uses AI with local fallback.
+- Record normalization and conservative duplicate merging.
+- Terminal monitor for live CLI visibility.
 - A Markdown digest generator.
-- CLI commands for init, seed, collect, extract, and run-once.
+- CLI commands for init, seed, collect, extract, monitor, archive, reprocess, and run-once.
 
 ## Quick Start
 
@@ -61,10 +78,10 @@ Free OpenRouter option, if available:
 OPENAI_MODEL=deepseek/deepseek-v4-flash:free
 ```
 
-Or pass it directly:
+Or pass a model directly:
 
 ```bash
-python3 -m research_loop --extractor openai --openai-model gpt-5.2 extract-once
+python3 -m research_loop --extractor hybrid --openai-model deepseek/deepseek-v4-flash extract-once
 ```
 
 This app supports OpenRouter through `OPENROUTER_API_KEY`. It does not read Codex's private login/session files.
@@ -144,6 +161,8 @@ More detail:
 
 - [Vision](docs/VISION.md)
 - [Architecture](docs/architecture.md)
+- [Loop contracts](docs/LOOP_CONTRACTS.md)
+- [Deployment](docs/DEPLOYMENT.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Project checklist](docs/CHECKLIST.md)
 
@@ -164,13 +183,15 @@ digests/*.md
 .env
 ```
 
-## Next Versions
+## v0.3.0 Finish Line
 
-Likely next steps:
+The next target is making this loop deployment-ready so the rest of the system can build on top of it:
 
-- Add source scheduling.
-- Add source management commands.
-- Add exchange/news source packs.
+- Source config file and import/export commands.
+- Better source packs for exchange, news, Reddit, and RSS feeds.
+- Structured logs and a simple 24/7 runbook.
+- Stable downstream output contract.
+- Deployment checklist for local Mac or server use.
 
 ## Safety Boundary
 

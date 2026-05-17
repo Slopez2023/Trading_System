@@ -1,6 +1,6 @@
 # Roadmap
 
-This project is a research ingestion loop, not a trading bot. It collects source evidence, extracts structured research records, and prepares those records for later loops.
+This project is a loop-based trading research system. The current goal is to finish the research loop through `v0.3.0`, then use its output as input for the next loops.
 
 ## v0.1.0 - Foundation
 
@@ -19,73 +19,93 @@ Status: complete.
 - [x] Markdown digest
 - [x] Tests and GitHub Actions
 
-## v0.1.1 - Working AI Version
+## v0.2.0 - Working AI Research Loop
 
-Purpose: make the loop useful now by adding AI extraction while keeping local fallback.
+Status: complete.
 
 - [x] Add extractor provider setting: `local`, `openai`, `hybrid`
-- [x] Add OpenAI extractor
-- [x] Use structured JSON output
-- [x] Validate model output before saving records
+- [x] Add OpenRouter/OpenAI-compatible AI extraction
 - [x] Keep local extractor as fallback
-- [x] Fix strategy/risk classification issue in local extractor
-- [x] Add tests for OpenAI response parsing
-- [x] Add real `.env` loading or document shell exports clearly
-- [x] Add one command that runs a full smoke test
-- [x] Add source scheduling so sources are only checked when due
-- [x] Store collector errors instead of only printing them
-- [ ] Add structured logging
+- [x] Add `.env` loading
+- [x] Support `OPENROUTER_API_KEY`
+- [x] Set low-cost OpenRouter default: `deepseek/deepseek-v4-flash`
+- [x] Add source scheduling
+- [x] Add source/raw management commands
+- [x] Add source error tracking
+- [x] Add raw item processing states
+- [x] Add smoke test command
+- [x] Add extractor benchmark command
+- [x] Add live terminal monitor
+- [x] Add archive and reprocess commands
+- [x] Normalize extracted records before saving
+- [x] Add conservative duplicate merging with evidence preservation
+- [x] Add tests for extraction, scheduling, monitoring, normalization, and dedupe
 
 Acceptance:
 
 - [x] Local extraction works without API keys
-- [x] OpenAI extraction can be tested without live API calls
+- [x] AI extraction works through OpenRouter configuration
 - [x] Hybrid mode falls back to local extraction
-- [ ] User can run one documented AI smoke test with `OPENAI_API_KEY`
+- [x] CLI can be watched live with `monitor`
+- [x] Duplicate obvious ideas merge without losing source evidence
 
-## v0.2.0 - Source and Loop Hardening
+## v0.3.0 - Deployment-Ready Research Loop
 
-Purpose: make the system safe for long-running use.
+Status: next.
 
-- [x] Respect `check_frequency_minutes`
-- [x] Add source due/not-due logic
-- [x] Add raw item states: `pending`, `processing`, `extracted`, `ignored`, `failed`
-- [x] Add processing claim step to avoid duplicate processing
-- [x] Store source failures in database
-- [x] Add commands: `sources list`, `sources enable`, `sources disable`
-- [x] Add command: `raw list --status pending`
-- [ ] Add collector fixture tests
-- [x] Add integration test: `init-db -> add-raw -> extract -> digest`
+Purpose: make the research loop clean enough to run 24/7 while other loops are built around it.
 
-Acceptance:
+### Repo and Loop Structure
 
-- [x] Running the loop repeatedly does not over-fetch sources
-- [x] Collection failures are inspectable
-- [x] Two workers cannot process the same raw item
+- [x] Add `loops/` folder as the system home for loop docs
+- [x] Add research loop contract docs
+- [ ] Add a starter folder for the next loop once its responsibility is chosen
+- [ ] Add a top-level system flow diagram after the second loop is named
 
-## v0.3.0 - Clean Source Management
-
-Purpose: make source management editable without changing code.
+### Source Management
 
 - [ ] Add `sources.yaml`
-- [ ] Add source import/export commands
-- [ ] Add source validation
-- [ ] Add source categories: social, news, exchange, research, market_data, filing
-- [ ] Add source candidate workflow
-- [ ] Add source performance scoring
-- [ ] Add source health command
-- [ ] Add first exchange/news source pack
+- [ ] Add source import command
+- [ ] Add source export command
+- [ ] Add source validation before activation
+- [ ] Add source categories: `social`, `news`, `exchange`, `research`, `market_data`, `filing`
+- [ ] Add first exchange announcement source pack
+- [ ] Add first market/news RSS source pack
+- [ ] Add source candidate approval workflow
 
-Acceptance:
+### Deployment Readiness
 
-- [ ] Sources can be added/edited outside Python code
-- [ ] Source quality is visible
-- [ ] Candidate sources require approval before activation
+- [x] Document local `.env` setup
+- [x] Document monitor and smoke-test commands
+- [ ] Add structured logging
+- [ ] Add deployment runbook for local Mac/server
+- [ ] Add restart recommendation: launchd, systemd, tmux, or supervisor
+- [ ] Add database backup instructions
+- [ ] Add production smoke checklist
+- [ ] Add versioned release checklist
 
-## Later
+### Output Quality
 
-- Record dedupe and merge
-- Downstream routing queues
-- API/export layer
-- Review dashboard
-- 24/7 service deployment
+- [x] Normalize statuses, markets, risks, scores, and loop targets
+- [x] Preserve weird/early ideas instead of filtering hard
+- [x] Merge obvious duplicates conservatively
+- [ ] Add record export command for downstream loops
+- [ ] Add source-quality summary command
+- [ ] Add daily digest command with stable naming
+
+### Acceptance for v0.3.0
+
+- [ ] A fresh clone can be configured from `.env.example`
+- [ ] `smoke-test` passes on a clean database
+- [ ] `loop` can run continuously with documented monitoring
+- [ ] Sources can be managed without editing Python code
+- [ ] Downstream loops have a documented input contract
+- [ ] Tests and compile checks pass before release
+
+## After v0.3.0
+
+- Validation loop: decide what should be backtested, researched more, ignored, or watched.
+- Backtest loop: convert selected strategy ideas into test specs and results.
+- Data loop: collect required market data for selected records.
+- Review loop: human approval and audit trail.
+- Execution loop: only after validation, backtesting, and risk controls exist.
