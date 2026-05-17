@@ -17,7 +17,10 @@ def plan_once(connection: sqlite3.Connection, limit: int = 5, min_roi: int = 20)
     repo = ExperimentRepository(connection)
     created_or_updated = 0
     skipped = 0
-    for row in repo.candidate_research_records(limit=limit):
+    fetch_limit = max(limit, limit * 5)
+    for row in repo.candidate_research_records(limit=fetch_limit):
+        if created_or_updated >= limit:
+            break
         spec = spec_from_research_record(row)
         if spec is None or spec.scores.get("roi", 0) < min_roi:
             skipped += 1
@@ -50,11 +53,26 @@ def spec_from_research_record(row: sqlite3.Row) -> ExperimentSpec | None:
         return None
     if _is_too_vague(summary, required_data):
         return None
-    if "listing" in text or "announcement" in text:
+    if _looks_like_exchange_listing_event(text):
         return _listing_event_study(row, markets, assets, required_data, risks, scores)
     if "funding" in text and ("open interest" in text or " oi " in f" {text} "):
         return _funding_signal_backtest(row, markets, assets, required_data, risks, scores)
     return None
+
+
+def _looks_like_exchange_listing_event(text: str) -> bool:
+    if "delisting" in text or "de-listing" in text or "delisted" in text:
+        return False
+    exchange_tokens = ("coinbase", "binance", "kraken", "okx", "bybit", "upbit", "exchange")
+    listing_tokens = ("listing", "listed", "lists", "new listing")
+    has_exchange_context = any(exchange in text for exchange in exchange_tokens)
+    if any(token in text for token in listing_tokens):
+        return has_exchange_context
+    if "announcement" not in text:
+        return False
+    return any(exchange in text for exchange in exchange_tokens) and any(
+        token in text for token in ("asset", "token", "coin", "pair", "market")
+    )
 
 
 def _funding_signal_backtest(
