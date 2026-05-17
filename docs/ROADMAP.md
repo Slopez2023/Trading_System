@@ -51,7 +51,7 @@ Acceptance:
 
 ## v0.3.0 - Deployment-Ready Research Loop
 
-Status: next.
+Status: delivered.
 
 Purpose: make the research loop clean enough to run 24/7 while other loops are built around it.
 
@@ -67,10 +67,10 @@ Purpose: make the research loop clean enough to run 24/7 while other loops are b
 - [x] Add `loops/research_loop/sources.json`
 - [x] Add source import command
 - [x] Add source export command
-- [ ] Add source validation before activation
-- [ ] Add source categories: `social`, `news`, `exchange`, `research`, `market_data`, `filing`
+- [x] Add source validation before activation
+- [x] Add source categories: `social`, `news`, `exchange`, `research`, `market_data`, `filing`
 - [x] Add first exchange candidate source
-- [ ] Add first market/news RSS source pack
+- [x] Add first market/news RSS source pack
 - [ ] Add source candidate approval workflow
 
 ### Deployment Readiness
@@ -78,11 +78,11 @@ Purpose: make the research loop clean enough to run 24/7 while other loops are b
 - [x] Document local `.env` setup
 - [x] Document monitor and smoke-test commands
 - [x] Add structured logging
-- [ ] Add deployment runbook for local Mac/server
-- [ ] Add restart recommendation: launchd, systemd, tmux, or supervisor
-- [ ] Add database backup instructions
-- [ ] Add production smoke checklist
-- [ ] Add versioned release checklist
+- [x] Add deployment runbook for local Mac/server
+- [x] Add restart recommendation: launchd, systemd, tmux, or supervisor
+- [x] Add database backup instructions
+- [x] Add production smoke checklist
+- [x] Add versioned release checklist
 
 ### Output Quality
 
@@ -96,12 +96,12 @@ Purpose: make the research loop clean enough to run 24/7 while other loops are b
 
 ### Acceptance for v0.3.0
 
-- [ ] A fresh clone can be configured from `.env.example`
-- [ ] `smoke-test` passes on a clean database
-- [ ] `loop` can run continuously with documented monitoring
-- [ ] Sources can be managed without editing Python code
-- [ ] Downstream loops have a documented input contract
-- [ ] Tests and compile checks pass before release
+- [x] A fresh clone can be configured from `.env.example`
+- [x] `smoke-test` passes on a clean database
+- [x] `loop` can run continuously with documented monitoring
+- [x] Sources can be managed without editing Python code
+- [x] Downstream loops have a documented input contract
+- [x] Tests and compile checks pass before release
 
 ## After v0.3.0
 

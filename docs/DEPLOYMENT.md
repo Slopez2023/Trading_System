@@ -1,6 +1,6 @@
 # Deployment
 
-This is the deployment plan for the research loop. The target for `v0.3.0` is a clean 24/7 terminal-first service that can feed later loops.
+This is the deployment runbook for the research loop. `v0.3.0` is a clean 24/7 terminal-first service that can feed later loops.
 
 ## Local Setup
 
@@ -88,16 +88,41 @@ digests/*.md
 logs/*.jsonl
 ```
 
-## v0.3.0 Deployment Gaps
+## Backup
 
-Before calling this deployment-ready:
+Before long runs or repair commands:
 
-- [x] Add structured logs.
-- [x] Add source config import/export.
-- [ ] Add database backup instructions.
-- [ ] Add a restart wrapper using launchd, systemd, tmux, or supervisor.
-- [ ] Add a production release checklist.
-- [ ] Add source packs so a clean install has useful real sources.
+```bash
+cp data/research_loop.sqlite3 data/research_loop.sqlite3.backup_$(date +%Y%m%d_%H%M%S)
+```
+
+## 24/7 Run Option
+
+Simple terminal session:
+
+```bash
+python3 -m research_loop loop --sleep-seconds 900
+```
+
+Recommended terminal layout:
+
+```text
+Terminal 1: python3 -m research_loop loop --sleep-seconds 900
+Terminal 2: python3 -m research_loop monitor
+Terminal 3: tail -f logs/research_loop.jsonl
+```
+
+For a server later, use `tmux`, `systemd`, `launchd`, or another supervisor. Keep the command the same and supervise the process outside the app.
+
+## Release Checklist
+
+- [x] Tests pass.
+- [x] Compile check passes.
+- [x] Source config validates.
+- [x] Record export works.
+- [x] Record quality repair works.
+- [x] Runtime logs work.
+- [x] Repo is pushed and tagged.
 
 ## Operating Rule
 

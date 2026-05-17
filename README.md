@@ -1,6 +1,6 @@
 # Trading System
 
-Version: `0.1.0`
+Version: `0.3.0`
 
 This repo is being built as a multi-loop trading research system. The first working loop is the research loop.
 
@@ -27,7 +27,7 @@ digests/                ignored local Markdown digest output
 
 Future loops should get their own folder under `loops/`, then consume the research loop through the documented database/export contract instead of reaching into random internals.
 
-## What v0.1.0 Includes
+## What v0.3.0 Delivers
 
 - SQLite storage for sources, raw items, research records, evidence links, and source performance.
 - A source registry so the system remembers where to look.
@@ -192,12 +192,13 @@ logs/*.jsonl
 
 ## v0.3.0 Finish Line
 
-The next target is making this loop deployment-ready so the rest of the system can build on top of it:
+This version makes the research loop ready to run as the first 24/7 loop while the rest of the system is built:
 
 - JSON source config file and import/export commands.
-- Better source packs for exchange, news, Reddit, and RSS feeds.
-- Structured logs and a simple 24/7 runbook.
-- Stable downstream output contract.
+- OpenRouter-compatible AI extraction with local fallback.
+- Structured logs and terminal monitor.
+- Stable downstream JSON export contract.
+- Record quality repair for fingerprints, scores, and noisy markets.
 - Deployment checklist for local Mac or server use.
 
 ## Safety Boundary

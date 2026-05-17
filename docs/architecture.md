@@ -48,7 +48,7 @@ The research loop should not know how later loops trade. Later loops should not 
 
 ## Storage
 
-SQLite is the v0.1.0 storage backend.
+SQLite is the v0.3.0 storage backend.
 
 Main tables:
 

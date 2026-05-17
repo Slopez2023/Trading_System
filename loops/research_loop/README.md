@@ -1,6 +1,6 @@
 # Research Loop
 
-Status: working, being hardened for `v0.3.0`.
+Status: delivered as `v0.3.0`.
 
 The research loop is the first loop in the system.
 
@@ -50,11 +50,9 @@ python3 -m research_loop smoke-test
 python3 -m research_loop records export --file /tmp/research_records.json
 ```
 
-## v0.3.0 Goal
+## v0.3.0 Delivered
 
 Make this loop deployable and dependable enough that the next loops can build against it.
-
-Done:
 
 - AI extraction through OpenRouter-compatible API
 - Local fallback extraction
@@ -65,8 +63,5 @@ Done:
 - JSON source config import/export
 - Downstream record export
 - Structured JSONL runtime logs
-
-Still needed:
-
-- More source packs
-- Deployment runbook completion
+- Record quality repair
+- Deployment runbook
